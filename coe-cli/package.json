@@ -63,7 +63,7 @@
     "mock-fs": "^5.1.2",
     "ts-jest": "^27.1.3",
     "ts-node": "^10.4.0",
-    "typedoc": "^0.22.11",
+    "typedoc": "^0.25.3",
     "typedoc-plugin-markdown": "^3.11.12",
     "walk-sync": "^3.0.0"
   },
