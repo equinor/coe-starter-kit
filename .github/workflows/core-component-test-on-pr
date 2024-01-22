@@ -1,0 +1,69 @@
+name: Build and deploy CoE core components on pull request
+
+on:
+  pull_request:
+    types: [opened, reopened] #[review_requested]
+    branches: [main]
+    paths: 
+      - 'solutions/CenterofExcellenceCoreComponents/SolutionPackage/**'
+
+env:
+  # Sould be consistent with folder name in the root of the repository.
+  
+  SOLUTION_NAME: CenterofExcellenceCoreComponents
+  TARGET_ENVIRONMENT_URL: ${{ vars.ENV_TARGET_DATAVERSE_ENVIRONMENT_URL }}
+  SOLUTION_SHIPPING_FOLDER: solutions/release
+  
+  CLIENT_ID: ${{ vars.ENV_DATAVERSE_ENVIRONMENT_APPUSER_AZURE_CLIENT_ID }}
+  TENANT_ID: ${{ vars.AZURE_TENANT_ID}}
+  RUNNER_DEBUG: 1
+
+  
+jobs:
+  pack-and-import-unmanaged-solution:
+    runs-on: windows-latest
+    # or you can say runs-on: ubuntu-latest
+    environment: development
+    env:
+      CLIENT_ID: ${{ vars.ENV_DATAVERSE_ENVIRONMENT_APPUSER_AZURE_CLIENT_ID }}
+      RUNNER_DEBUG: 1
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Pack managed solution
+      uses: microsoft/powerplatform-actions/pack-solution@v0
+      with:
+        solution-folder: ${{ env.SOLUTION_NAME }}
+        solution-file: out/${{ env.SOLUTION_NAME }}_managed.zip
+        process-canvas-apps: true
+        solution-type: managed
+    - name: Pack unmanaged solution
+      uses: microsoft/powerplatform-actions/pack-solution@v0
+      with:
+        solution-folder: ${{ env.SOLUTION_NAME }}
+        solution-file: out/${{ env.SOLUTION_NAME }}.zip
+        process-canvas-apps: true
+        solution-type: unmanaged
+    
+    - name: who-am-i action
+      uses: microsoft/powerplatform-actions/who-am-i@v0
+      with:
+        environment-url: ${{ env.TARGET_ENVIRONMENT_URL }}
+        app-id: ${{ env.CLIENT_ID }}
+        client-secret: ${{ secrets.ENV_DATAVERSE_ENVIRONMENT_APPUSER_AZURE_CLIENT_SECRET }}
+        tenant-id: ${{ env.TENANT_ID }}
+
+    - name: Import solution
+      uses: microsoft/powerplatform-actions/import-solution@v0
+      with:
+        environment-url: ${{ env.TARGET_ENVIRONMENT_URL }}
+        app-id: ${{env.CLIENT_ID}}
+        client-secret: ${{ secrets.ENV_DATAVERSE_ENVIRONMENT_APPUSER_AZURE_CLIENT_SECRET }}
+        tenant-id: ${{env.TENANT_ID}}
+        solution-file: out/${{ env.SOLUTION_NAME }}_managed.zip
+        convert-to-managed: true
+        force-overwrite: true
+        publish-changes: true
