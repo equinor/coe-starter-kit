@@ -24,7 +24,7 @@
     "@azure/msal-node": "^1.18.4",
     "@octokit/rest": "^18.12.0",
     "adm-zip": "^0.5.9",
-    "axios": "^1.6.4",
+    "axios": "^1.7.4",
     "azure-devops-node-api": "^11.1.0",
     "colors": "^1.4.0",
     "commander": "^9.0.0",
