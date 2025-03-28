@@ -53,7 +53,7 @@
     "@types/open": "^6.2.1",
     "@types/pascalcase": "^1.0.1",
     "@types/uuid": "^8.3.4",
-    "@typescript-eslint/eslint-plugin": "^5.10.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.10.2",
     "babel-jest": "^27.4.6",
     "eslint-config-airbnb-typescript": "^16.1.0",
