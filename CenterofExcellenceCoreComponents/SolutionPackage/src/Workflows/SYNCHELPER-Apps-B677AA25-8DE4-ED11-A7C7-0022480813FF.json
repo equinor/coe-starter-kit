@@ -50,7 +50,7 @@
           }
         },
         "CoE System User ID (admin_CoESystemUserID)": {
-          "defaultValue": "f039b642-ad47-ee11-be6d-000d3a3411d9",
+          "defaultValue": "6f018471-30d7-ef11-8ee9-000d3a328366",
           "type": "String",
           "metadata": {
             "schemaName": "admin_CoESystemUserID",
@@ -404,6 +404,7 @@
                               "item/admin_appenvironmentid": "@triggerBody()['text_1']",
                               "item/admin_appiconuri": "@outputs('Get_App_as_Admin')?['body/properties/backgroundImageUri']",
                               "item/cr5d5_appisorphaned": "Yes",
+                              "item/admin_appisquarantined": "@outputs('AppIsQuarantined')",
                               "item/admin_appmodifiedon": "@outputs('Get_App_as_Admin')?['body/properties/lastModifiedTime']",
                               "item/admin_appplanclassification": "@coalesce(outputs('Get_App_as_Admin')?['body/properties/appPlanClassification'], '')",
                               "item/admin_apppublished": "@if(empty(outputs('Get_App_as_Admin')?['body/properties/lastPublishTime']), outputs('Get_App_as_Admin')?['body/properties/createdTime'], outputs('Get_App_as_Admin')?['body/properties/lastPublishTime'])",
@@ -430,6 +431,7 @@
                               "item/admin_iconbackgroundcolor": "@outputs('Get_App_as_Admin')?['body/properties/backgroundColor']",
                               "item/admin_inventoryme": false,
                               "item/admin_powerappsreleaseversion": "@outputs('Get_App_as_Admin')?['body/tags/publisherVersion']",
+                              "item/admin_quarantineappdate": "@if(equals(coalesce(outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState/quarantineStatus'], ''), 'Quarantined'), coalesce(outputs('Get_app_from_Inventory')?['admin_quarantineappdate'], outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState/lastUpdated'], utcNow()), null)",
                               "item/admin_recordguidasstring": "@triggerBody()['text_2']",
                               "item/admin_appcontainsbrokenconnections": "@variables('hasBadConnections')",
                               "item/admin_sharepointformurl": "@coalesce(outputs('Get_App_as_Admin')?['body/properties/embeddedApp/listUrl'], '')",
@@ -477,6 +479,7 @@
                                 "item/admin_appenvironmentid": "@triggerBody()['text_1']",
                                 "item/admin_appiconuri": "@outputs('Get_App_as_Admin')?['body/properties/backgroundImageUri']",
                                 "item/cr5d5_appisorphaned": "No",
+                                "item/admin_appisquarantined": "@outputs('AppIsQuarantined')",
                                 "item/admin_appmodifiedon": "@outputs('Get_App_as_Admin')?['body/properties/lastModifiedTime']",
                                 "item/admin_AppOwner@odata.bind": "admin_makers(@{outputs('Get_Maker')?['body/admin_makerid']})",
                                 "item/admin_appownerdisplayname": "@outputs('Get_Maker')?['body/admin_displayname']",
@@ -507,6 +510,7 @@
                                 "item/admin_iconbackgroundcolor": "@outputs('Get_App_as_Admin')?['body/properties/backgroundColor']",
                                 "item/admin_inventoryme": false,
                                 "item/admin_powerappsreleaseversion": "@outputs('Get_App_as_Admin')?['body/tags/publisherVersion']",
+                                "item/admin_quarantineappdate": "@if(equals(coalesce(outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState/quarantineStatus'], ''), 'Quarantined'), coalesce(outputs('Get_app_from_Inventory')?['admin_quarantineappdate'], outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState/lastUpdated'], utcNow()), null)",
                                 "item/admin_recordguidasstring": "@triggerBody()['text_2']",
                                 "item/admin_appcontainsbrokenconnections": "@variables('hasBadConnections')",
                                 "item/admin_sharepointformurl": "@coalesce(outputs('Get_App_as_Admin')?['body/properties/embeddedApp/listUrl'], '')",
@@ -1507,7 +1511,7 @@
                     }
                   },
                   "runAfter": {
-                    "Get_DLP_Policies_Violated": [
+                    "Quarantine_State": [
                       "Succeeded"
                     ]
                   },
@@ -1661,6 +1665,27 @@
                   },
                   "metadata": {
                     "operationMetadataId": "615c25ea-17df-47c6-b0b2-1620d61d03c7"
+                  },
+                  "type": "Scope"
+                },
+                "Quarantine_State": {
+                  "actions": {
+                    "AppIsQuarantined": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "98fca131-e334-4ba1-b988-55b47fc9f703"
+                      },
+                      "type": "Compose",
+                      "inputs": "@if(equals(null, outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState']), false, if(equals('Quarantined', outputs('Get_App_as_Admin')?['body/properties/executionRestrictions/appQuarantineState']['quarantineStatus']), true, false))"
+                    }
+                  },
+                  "runAfter": {
+                    "Get_DLP_Policies_Violated": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "736809a0-4b8d-4415-822d-59e300d560bd"
                   },
                   "type": "Scope"
                 }

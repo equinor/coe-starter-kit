@@ -33,7 +33,7 @@
           "type": "SecureObject"
         },
         "FullInventory (admin_FullInventory)": {
-          "defaultValue": false,
+          "defaultValue": true,
           "type": "Bool",
           "metadata": {
             "schemaName": "admin_FullInventory",
@@ -49,7 +49,7 @@
           }
         },
         "CoE System User ID (admin_CoESystemUserID)": {
-          "defaultValue": "12c238e6-eea1-ef11-8a69-000d3a5c3575",
+          "defaultValue": "6f018471-30d7-ef11-8ee9-000d3a328366",
           "type": "String",
           "metadata": {
             "schemaName": "admin_CoESystemUserID",
@@ -175,14 +175,18 @@
                         }
                       },
                       "runAfter": {
-                        "Terminate_if_no_access": [
-                          "Skipped"
+                        "SetPortalSource(EDM_or_Standard)": [
+                          "Succeeded"
                         ]
                       },
                       "expression": {
-                        "equals": [
-                          "@length(outputs('List_Envt_Portals')?['body/value'])",
-                          0
+                        "and": [
+                          {
+                            "equals": [
+                              "@if(\r\n  equals(variables('varPortalSource'), 'EDM'),\r\n  length(coalesce(outputs('List_Portal_EDM')?['body/value'], json('[]'))),\r\n  length(coalesce(outputs('List_Envt_Portals')?['body/value'], json('[]')))\r\n)\r\n",
+                              0
+                            ]
+                          }
                         ]
                       },
                       "metadata": {
@@ -205,7 +209,11 @@
                       }
                     },
                     "List_Envt_Portals": {
-                      "runAfter": {},
+                      "runAfter": {
+                        "List_Portal_EDM": [
+                          "Failed"
+                        ]
+                      },
                       "metadata": {
                         "operationMetadataId": "6ef2cc8a-c705-4ed3-a72a-c92fe9bc39f4"
                       },
@@ -219,7 +227,7 @@
                         "parameters": {
                           "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
                           "entityName": "adx_websites",
-                          "$select": "adx_name, modifiedon, createdon, adx_websiteid, adx_primarydomainname",
+                          "$select": "adx_name, modifiedon, createdon, adx_websiteid, adx_primarydomainname\n",
                           "$filter": "adx_websiteid ne null"
                         },
                         "authentication": "@parameters('$authentication')",
@@ -233,6 +241,41 @@
                         "paginationPolicy": {
                           "minimumItemCount": 100000
                         }
+                      }
+                    },
+                    "List_Portal_EDM": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "73edf14c-2dbe-4fce-8baf-326160662390"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "ListRecordsWithOrganization",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
+                          "entityName": "mspp_websites",
+                          "$select": "mspp_name, mspp_modifiedon, mspp_createdon, mspp_websiteid, mspp_primarydomainname"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "SetPortalSource(EDM_or_Standard)": {
+                      "runAfter": {
+                        "Terminate_if_no_access": [
+                          "Skipped"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "55b3cf80-4385-405c-95f2-ce8a33017912"
+                      },
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "varPortalSource",
+                        "value": "@if(and(equals(outputs('List_Portal_EDM')?['statusCode'], 200), greater(length(outputs('List_Portal_EDM')?['body/value']), 0)), 'EDM', 'Standard')"
                       }
                     }
                   },
@@ -351,10 +394,10 @@
                           },
                           "type": "Select",
                           "inputs": {
-                            "from": "@outputs('List_Envt_Portals')?['body/value']",
+                            "from": "@if(equals(outputs('List_Portal_EDM')?['statusCode'], 200), outputs('List_Portal_EDM')?['body/value'], outputs('List_Envt_Portals')?['body/value'])",
                             "select": {
-                              "Portal_Unique": "@concat(triggerOutputs()?['body/admin_environmentid'], '_', item()?['adx_websiteid'])",
-                              "Portal_NonUnique": "@item()?['adx_websiteid']"
+                              "Portal_Unique": "@concat(triggerOutputs()?['body/admin_environmentid'], '_', coalesce(item()?['mspp_websiteid'], item()?['adx_websiteid']))",
+                              "Portal_NonUnique": "@coalesce(item()?['mspp_websiteid'], item()?['adx_websiteid'])"
                             }
                           }
                         },
@@ -599,8 +642,8 @@
                             },
                             "type": "Query",
                             "inputs": {
-                              "from": "@outputs('List_Envt_Portals')?['body/value']",
-                              "where": "@or(equals(item()?['modifiedon'], null), greater(item()?['modifiedon'], body('Get_past_time')))"
+                              "from": "@if(equals(variables('varPortalSource'), 'EDM'), outputs('List_Portal_EDM')?['body/value'], outputs('List_Envt_Portals')?['body/value'])",
+                              "where": "@or(equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_modifiedon', 'modifiedon')], null), greater(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_modifiedon', 'modifiedon')], body('Get_past_time')))"
                             }
                           },
                           "Add_each_recently_modified_to_array": {
@@ -666,7 +709,7 @@
                                           }
                                         },
                                         "runAfter": {
-                                          "theLastDateModfiedCoE": [
+                                          "theLastDateModifiedCoE": [
                                             "Succeeded"
                                           ]
                                         },
@@ -674,7 +717,7 @@
                                           "or": [
                                             {
                                               "equals": [
-                                                "@length(outputs('theLastDateModfiedCoE'))",
+                                                "@length(outputs('theLastDateModifiedCoE'))",
                                                 0
                                               ]
                                             },
@@ -686,7 +729,7 @@
                                             },
                                             {
                                               "less": [
-                                                "@outputs('theLastDateModfiedCoE')",
+                                                "@outputs('theLastDateModifiedCoE')",
                                                 "@outputs('theLastDateModifiedProduct')"
                                               ]
                                             }
@@ -697,7 +740,7 @@
                                         },
                                         "type": "If"
                                       },
-                                      "theLastDateModfiedCoE": {
+                                      "theLastDateModifiedCoE": {
                                         "runAfter": {
                                           "theLastDateModifiedProduct": [
                                             "Succeeded"
@@ -827,7 +870,7 @@
                         },
                         "parameters": {
                           "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                          "entityName": "adx_websites",
+                          "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_websites', 'adx_websites')",
                           "recordId": "@items('For_each_item_to_inventory')?['Portal_NonUnique']"
                         },
                         "authentication": "@parameters('$authentication')",
@@ -901,7 +944,11 @@
                         "Site_Settings_Filtering_for_Authentication_Types": {
                           "actions": {
                             "List_Related_Site_Settings_to_the_portal": {
-                              "runAfter": {},
+                              "runAfter": {
+                                "FilterStringForSiteSettings": [
+                                  "Succeeded"
+                                ]
+                              },
                               "metadata": {
                                 "operationMetadataId": "6ef2cc8a-c705-4ed3-a72a-c92fe9bc39f4"
                               },
@@ -914,8 +961,8 @@
                                 },
                                 "parameters": {
                                   "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                                  "entityName": "adx_sitesettings",
-                                  "$filter": "_adx_websiteid_value eq @{items('For_each_item_to_inventory')?['Portal_NonUnique']}"
+                                  "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_sitesettings', 'adx_sitesettings')",
+                                  "$filter": "@outputs('FilterStringForSiteSettings')"
                                 },
                                 "authentication": "@parameters('$authentication')",
                                 "retryPolicy": {
@@ -942,7 +989,7 @@
                               "type": "Query",
                               "inputs": {
                                 "from": "@outputs('List_Related_Site_Settings_to_the_portal')?['body/value']",
-                                "where": "@equals(item()?['adx_name'], 'Authentication/Registration/LocalLoginEnabled')"
+                                "where": "@equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_name', 'adx_name')],'Authentication/Registration/LocalLoginEnabled')"
                               }
                             },
                             "Auth_Local_Authentication_Enabled": {
@@ -955,7 +1002,7 @@
                                 "operationMetadataId": "c830a6dc-adb0-4362-bfa6-51b5f76ead69"
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(length(body('Filter_array:_Return_Local_Auth_Site_Setting')), 0), true, First(body('Filter_array:_Return_Local_Auth_Site_Setting'))['adx_value'])",
+                              "inputs": "@if(equals(length(body('Filter_array:_Return_Local_Auth_Site_Setting')), 0), true, first(body('Filter_array:_Return_Local_Auth_Site_Setting'))?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_value', 'adx_value')])",
                               "description": "if filter returned no rows, default to true, else get value"
                             },
                             "Filter_array:_Return_Open_Registration_Enabled_Site_Setting": {
@@ -970,7 +1017,7 @@
                               "type": "Query",
                               "inputs": {
                                 "from": "@outputs('List_Related_Site_Settings_to_the_portal')?['body/value']",
-                                "where": "@equals(item()?['adx_name'], 'Authentication/Registration/OpenRegistrationEnabled')"
+                                "where": "@equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_name', 'adx_name')],'Authentication/Registration/OpenRegistrationEnabled')"
                               }
                             },
                             "Auth_Open_Registration_Enabled": {
@@ -983,7 +1030,7 @@
                                 "operationMetadataId": "1e351ecc-8fb6-4003-a92a-53283faaf455"
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(length(body('Filter_array:_Return_Open_Registration_Enabled_Site_Setting')), 0), true, First(body('Filter_array:_Return_Open_Registration_Enabled_Site_Setting'))['adx_value'])",
+                              "inputs": "@if(equals(length(body('Filter_array:_Return_Open_Registration_Enabled_Site_Setting')), 0), true, first(body('Filter_array:_Return_Open_Registration_Enabled_Site_Setting'))?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_value', 'adx_value')])",
                               "description": "if filter returned no rows, default to true, else get value"
                             },
                             "Filter_Array:_Return_Local_Registration_Enabled_Site_Setting": {
@@ -998,7 +1045,7 @@
                               "type": "Query",
                               "inputs": {
                                 "from": "@outputs('List_Related_Site_Settings_to_the_portal')?['body/value']",
-                                "where": "@equals(item()?['adx_name'], 'Authentication/Registration/Enabled')"
+                                "where": "@equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_name', 'adx_name')],'Authentication/Registration/Enabled')"
                               }
                             },
                             "Auth_Local_Registration_Enabled": {
@@ -1011,7 +1058,7 @@
                                 "operationMetadataId": "6e8a1960-5207-49fa-b47f-b9e6f6b2b7aa"
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(length(body('Filter_Array:_Return_Local_Registration_Enabled_Site_Setting')), 0), true, First(body('Filter_array:_Return_Local_Registration_Enabled_Site_Setting'))['adx_value'])",
+                              "inputs": "@if(equals(length(body('Filter_Array:_Return_Local_Registration_Enabled_Site_Setting')), 0), true, first(body('Filter_Array:_Return_Local_Registration_Enabled_Site_Setting'))?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_value', 'adx_value')])",
                               "description": "if filter returned no rows, default to true, else get value"
                             },
                             "Filter_Array:_Return_Invitation_Enabled_Site_Setting": {
@@ -1026,7 +1073,7 @@
                               "type": "Query",
                               "inputs": {
                                 "from": "@outputs('List_Related_Site_Settings_to_the_portal')?['body/value']",
-                                "where": "@equals(item()?['adx_name'], 'Authentication/Registration/InvitationEnabled')"
+                                "where": "@equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_name', 'adx_name')],'Authentication/Registration/InvitationEnabled')"
                               }
                             },
                             "Auth_Invitation_Enabled": {
@@ -1039,7 +1086,7 @@
                                 "operationMetadataId": "a7097c18-739c-4ffe-a566-d8808c445c2a"
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(length(body('Filter_Array:_Return_Invitation_Enabled_Site_Setting')), 0), true, First(body('Filter_array:_Return_Invitation_Enabled_Site_Setting'))['adx_value'])",
+                              "inputs": "@if(equals(length(body('Filter_Array:_Return_Invitation_Enabled_Site_Setting')), 0), true, first(body('Filter_Array:_Return_Invitation_Enabled_Site_Setting'))?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_value', 'adx_value')])",
                               "description": "if filter returned no rows, default to true, else get value"
                             },
                             "Filter_Array:_Return_External_Identities_Enabled_Site_Setting": {
@@ -1054,7 +1101,7 @@
                               "type": "Query",
                               "inputs": {
                                 "from": "@outputs('List_Related_Site_Settings_to_the_portal')?['body/value']",
-                                "where": "@equals(item()?['adx_name'], 'Authentication/Registration/ExternalLoginEnabled')"
+                                "where": "@equals(item()?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_name', 'adx_name')],'Authentication/Registration/ExternalLoginEnabled')"
                               }
                             },
                             "Auth_External_Identities_Enabled": {
@@ -1067,8 +1114,16 @@
                                 "operationMetadataId": "fa6b3a02-12a6-4e45-ad82-8c6732dfc0ae"
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(length(body('Filter_Array:_Return_External_Identities_Enabled_Site_Setting')), 0), true, First(body('Filter_array:_Return_External_Identities_Enabled_Site_Setting'))['adx_value'])",
+                              "inputs": "@if(equals(length(body('Filter_Array:_Return_External_Identities_Enabled_Site_Setting')), 0), true, first(body('Filter_Array:_Return_External_Identities_Enabled_Site_Setting'))?[if(equals(variables('varPortalSource'), 'EDM'), 'mspp_value', 'adx_value')])",
                               "description": "if filter returned no rows, default to true, else get value"
+                            },
+                            "FilterStringForSiteSettings": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "36551251-aa02-40ff-9606-e224b471a6ec"
+                              },
+                              "type": "Compose",
+                              "inputs": "@if(equals(variables('varPortalSource'), 'EDM'), concat('_mspp_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique']), concat('_adx_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique']))"
                             }
                           },
                           "runAfter": {
@@ -1097,8 +1152,8 @@
                                 },
                                 "parameters": {
                                   "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                                  "entityName": "adx_entitylists",
-                                  "$filter": "_adx_websiteid_value eq @{items('For_each_item_to_inventory')?['Portal_NonUnique']} and adx_entitypermissionsenabled eq false"
+                                  "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_entitylists', 'adx_entitylists')",
+                                  "$filter": "@if(equals(variables('varPortalSource'), 'EDM'), concat('_mspp_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique'], ' and mspp_entitypermissionsenabled eq false'), concat('_adx_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique'], ' and adx_entitypermissionsenabled eq false'))"
                                 },
                                 "authentication": "@parameters('$authentication')",
                                 "retryPolicy": {
@@ -1131,8 +1186,8 @@
                                 },
                                 "parameters": {
                                   "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                                  "entityName": "adx_entityforms",
-                                  "$filter": "_adx_websiteid_value eq @{items('For_each_item_to_inventory')?['Portal_NonUnique']} and adx_entitypermissionsenabled eq false"
+                                  "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_entityforms', 'adx_entityforms')",
+                                  "$filter": "@if(equals(variables('varPortalSource'), 'EDM'), concat('_mspp_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique'], ' and mspp_entitypermissionsenabled eq false'), concat('_adx_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique'], ' and adx_entitypermissionsenabled eq false'))"
                                 },
                                 "authentication": "@parameters('$authentication')",
                                 "retryPolicy": {
@@ -1165,8 +1220,8 @@
                                 },
                                 "parameters": {
                                   "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                                  "entityName": "adx_webforms",
-                                  "$filter": "_adx_websiteid_value eq @{items('For_each_item_to_inventory')?['Portal_NonUnique']}"
+                                  "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_webforms', 'adx_webforms')",
+                                  "$filter": "@if(equals(variables('varPortalSource'), 'EDM'), concat('_mspp_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique']), concat('_adx_websiteid_value eq ', items('For_each_item_to_inventory')?['Portal_NonUnique']))"
                                 },
                                 "authentication": "@parameters('$authentication')",
                                 "retryPolicy": {
@@ -1216,7 +1271,7 @@
                                     "operationMetadataId": "cd606b33-7ed7-43af-92fd-8afe0bf9e94f"
                                   },
                                   "type": "Compose",
-                                  "inputs": "@items('Apply_to_each_Advanced_Form')?['adx_webformid']"
+                                  "inputs": "@coalesce(items('Apply_to_each_Advanced_Form')?['adx_webformid'], items('Apply_to_each_Advanced_Form')?['mspp_webformid'])"
                                 },
                                 "If_found_steps_with_permissions_disabled,_set_the_variable_to_true": {
                                   "actions": {
@@ -1266,8 +1321,8 @@
                                     },
                                     "parameters": {
                                       "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
-                                      "entityName": "adx_webformsteps",
-                                      "$filter": "_adx_webform_value eq @{outputs('AdvancedFormID')} and adx_entitypermissionsenabled eq false"
+                                      "entityName": "@if(equals(variables('varPortalSource'), 'EDM'), 'mspp_webformsteps', 'adx_webformsteps')",
+                                      "$filter": "@if(equals(variables('varPortalSource'), 'EDM'), concat('_mspp_webform_value eq ', outputs('AdvancedFormID'), ' and mspp_entitypermissionsenabled eq false'), concat('_adx_webform_value eq ', outputs('AdvancedFormID'), ' and adx_entitypermissionsenabled eq false'))"
                                     },
                                     "authentication": "@parameters('$authentication')",
                                     "retryPolicy": {
@@ -1333,7 +1388,7 @@
                                 "parameters": {
                                   "organization": "@triggerOutputs()?['body/admin_environmentcdsinstanceurl']",
                                   "entityName": "systemusers",
-                                  "recordId": "@outputs('Get_actual_object')?['body/_createdby_value']"
+                                  "recordId": "@if(equals(variables('varPortalSource'), 'EDM'), outputs('Get_actual_object')?['body/_mspp_createdby_value'], outputs('Get_actual_object')?['body/_createdby_value'])"
                                 },
                                 "authentication": "@parameters('$authentication')",
                                 "retryPolicy": {
@@ -1512,7 +1567,7 @@
                                 "parameters": {
                                   "entityName": "admin_portals",
                                   "recordId": "@outputs('GUID_to_use')",
-                                  "item/admin_portaldisplayname": "@outputs('Get_actual_object')?['body/adx_name']",
+                                  "item/admin_portaldisplayname": "@coalesce(outputs('Get_actual_object')?['body/mspp_name'], outputs('Get_actual_object')?['body/adx_name'])",
                                   "item/admin_portaluniquename": "@items('For_each_item_to_inventory')?['Portal_Unique']",
                                   "item/admin_authexternalidentitiesenabled": "@outputs('Auth_External_Identities_Enabled')",
                                   "item/admin_authinvitationenabled": "@outputs('Auth_Invitation_Enabled')",
@@ -1525,10 +1580,10 @@
                                   "item/admin_portaldeletedon": "@null",
                                   "item/admin_PortalEnvironment@odata.bind": "admin_environments(@{triggerOutputs()?['body/admin_environmentid']})",
                                   "item/admin_portalisophaned": true,
-                                  "item/admin_portalcreatedon": "@outputs('Get_actual_object')?['body/createdon']",
-                                  "item/admin_portalmodifiedon": "@outputs('Get_actual_object')?['body/modifiedon']",
+                                  "item/admin_portalcreatedon": "@coalesce(outputs('Get_actual_object')?['body/mspp_createdon'], outputs('Get_actual_object')?['body/createdon'])",
+                                  "item/admin_portalmodifiedon": "@coalesce(outputs('Get_actual_object')?['body/mspp_modifiedon'], outputs('Get_actual_object')?['body/modifiedon'])",
                                   "item/admin_portalwebsiteid": "@items('For_each_item_to_inventory')?['Portal_NonUnique']",
-                                  "item/admin_portalwebsitename": "@outputs('Get_actual_object')?['body/adx_primarydomainname']",
+                                  "item/admin_portalwebsitename": "@coalesce(outputs('Get_actual_object')?['body/mspp_primarydomainname'], outputs('Get_actual_object')?['body/adx_primarydomainname'])",
                                   "item/admin_recordguidasstring": "@outputs('GUID_to_use')",
                                   "item/admin_authtablepermissionsenabled": "@outputs('All_Table_Permissions_Enbabled')",
                                   "item/admin_tablepermissionsenabledalladvformstep": "@variables('AdvancedFormStepHasTablePermissionsEnabled')",
@@ -1561,7 +1616,7 @@
                                   "parameters": {
                                     "entityName": "admin_portals",
                                     "recordId": "@outputs('GUID_to_use')",
-                                    "item/admin_portaldisplayname": "@outputs('Get_actual_object')?['body/adx_name']",
+                                    "item/admin_portaldisplayname": "@coalesce(outputs('Get_actual_object')?['body/mspp_name'], outputs('Get_actual_object')?['body/adx_name'])",
                                     "item/admin_portaluniquename": "@items('For_each_item_to_inventory')?['Portal_Unique']",
                                     "item/admin_appownerdisplayname": "@outputs('Get_Maker')?['body/admin_displayname']",
                                     "item/admin_authexternalidentitiesenabled": "@outputs('Auth_External_Identities_Enabled')",
@@ -1576,10 +1631,10 @@
                                     "item/admin_PortalEnvironment@odata.bind": "admin_environments(@{triggerOutputs()?['body/admin_environmentid']})",
                                     "item/admin_portalisophaned": false,
                                     "item/admin_PortalOwner@odata.bind": "admin_makers(@{outputs('Get_Maker')?['body/admin_makerid']})",
-                                    "item/admin_portalcreatedon": "@outputs('Get_actual_object')?['body/createdon']",
-                                    "item/admin_portalmodifiedon": "@outputs('Get_actual_object')?['body/modifiedon']",
+                                    "item/admin_portalcreatedon": "@coalesce(outputs('Get_actual_object')?['body/mspp_createdon'], outputs('Get_actual_object')?['body/createdon'])",
+                                    "item/admin_portalmodifiedon": "@coalesce(outputs('Get_actual_object')?['body/mspp_modifiedon'], outputs('Get_actual_object')?['body/modifiedon'])",
                                     "item/admin_portalwebsiteid": "@items('For_each_item_to_inventory')?['Portal_NonUnique']",
-                                    "item/admin_portalwebsitename": "@outputs('Get_actual_object')?['body/adx_primarydomainname']",
+                                    "item/admin_portalwebsitename": "@coalesce(outputs('Get_actual_object')?['body/mspp_primarydomainname'], outputs('Get_actual_object')?['body/adx_primarydomainname'])",
                                     "item/admin_recordguidasstring": "@outputs('GUID_to_use')",
                                     "item/admin_authtablepermissionsenabled": "@outputs('All_Table_Permissions_Enbabled')",
                                     "item/admin_tablepermissionsenabledalladvformstep": "@variables('AdvancedFormStepHasTablePermissionsEnabled')",
@@ -1633,7 +1688,7 @@
             }
           },
           "runAfter": {
-            "Initialize_portalsToInvenotry": [
+            "varPortalSource": [
               "Succeeded"
             ]
           },
@@ -1873,6 +1928,25 @@
             "operationMetadataId": "49b3d120-232d-4694-b373-a97ecde35cc4"
           },
           "type": "If"
+        },
+        "varPortalSource": {
+          "runAfter": {
+            "Initialize_portalsToInvenotry": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "9b2de0fb-f4b9-44b0-9b83-65d696baa53f"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varPortalSource",
+                "type": "string"
+              }
+            ]
+          }
         }
       }
     },

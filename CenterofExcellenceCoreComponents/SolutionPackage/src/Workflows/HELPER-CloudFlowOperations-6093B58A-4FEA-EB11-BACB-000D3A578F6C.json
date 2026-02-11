@@ -2,6 +2,7 @@
   "properties": {
     "connectionReferences": {
       "shared_commondataserviceforapps": {
+        "impersonation": {},
         "runtimeSource": "embedded",
         "connection": {
           "connectionReferenceLogicalName": "admin_CoECoreDataverse2"
@@ -20,6 +21,7 @@
         }
       },
       "shared_commondataserviceforapps_1": {
+        "impersonation": {},
         "runtimeSource": "embedded",
         "connection": {
           "connectionReferenceLogicalName": "admin_CoECoreDataverse"
@@ -42,13 +44,13 @@
       "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
       "contentVersion": "1.0.0.0",
       "parameters": {
-        "$connections": {
-          "defaultValue": {},
-          "type": "Object"
-        },
         "$authentication": {
           "defaultValue": {},
           "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
         },
         "Power Automate Environment Variable (admin_PowerAutomateEnvironmentVariable)": {
           "defaultValue": "https://flow.microsoft.com/manage/environments/",
@@ -156,7 +158,6 @@
         "Perform_Cloud_Flow_Operation": {
           "actions": {
             "EnvtGUID": {
-              "runAfter": {},
               "metadata": {
                 "operationMetadataId": "0237a90a-c2ef-420d-b9bf-3f5d4b095373"
               },
@@ -174,18 +175,14 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "GetItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_flows",
                   "recordId": "@triggerBody()['text_1']"
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "connectionName": "shared_commondataserviceforapps"
                 }
               }
             },
@@ -209,23 +206,18 @@
                 "Get_User_Info_if_not_null": {
                   "actions": {
                     "Get_user_photo_(V2)": {
-                      "runAfter": {},
                       "metadata": {
                         "operationMetadataId": "9ca8fc74-8bac-4620-aaea-a442f839f4cf"
                       },
                       "type": "OpenApiConnection",
                       "inputs": {
-                        "host": {
-                          "connectionName": "shared_office365users",
-                          "operationId": "UserPhoto_V2",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
-                        },
                         "parameters": {
                           "id": "@triggerBody()['text']"
                         },
-                        "authentication": {
-                          "type": "Raw",
-                          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+                          "operationId": "UserPhoto_V2",
+                          "connectionName": "shared_office365users"
                         }
                       }
                     },
@@ -241,17 +233,13 @@
                       },
                       "type": "OpenApiConnection",
                       "inputs": {
-                        "host": {
-                          "connectionName": "shared_office365users",
-                          "operationId": "UserProfile_V2",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
-                        },
                         "parameters": {
                           "id": "@triggerBody()['text']"
                         },
-                        "authentication": {
-                          "type": "Raw",
-                          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+                          "operationId": "UserProfile_V2",
+                          "connectionName": "shared_office365users"
                         }
                       }
                     },
@@ -280,7 +268,9 @@
                       "inputs": "Catch - for delete cases with no user"
                     }
                   },
-                  "runAfter": {},
+                  "else": {
+                    "actions": {}
+                  },
                   "expression": {
                     "and": [
                       {
@@ -335,7 +325,7 @@
                           "actions": {
                             "Mark_app_owner_in_CoE_Soln_Flow": {
                               "runAfter": {
-                                "Set_ReturnString_to_failed_-_assign_solution_aware": [
+                                "Fail_UpdateFlowOwner": [
                                   "Skipped"
                                 ]
                               },
@@ -344,20 +334,16 @@
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_commondataserviceforapps",
-                                  "operationId": "UpdateRecord",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                },
                                 "parameters": {
                                   "entityName": "admin_flows",
                                   "recordId": "@triggerBody()['text_1']",
                                   "item/admin_DerivedOwner@odata.bind": "admin_makers(@{triggerBody()['text']})",
                                   "item/cr5d5_flowisorphaned": "no"
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                  "operationId": "UpdateRecord",
+                                  "connectionName": "shared_commondataserviceforapps"
                                 },
                                 "retryPolicy": {
                                   "type": "exponential",
@@ -366,43 +352,23 @@
                                 }
                               }
                             },
-                            "Set_ReturnString_to_failed_-_assign_solution_aware": {
-                              "runAfter": {
-                                "Update_flow_owner": [
-                                  "Failed"
-                                ]
-                              },
-                              "metadata": {
-                                "operationMetadataId": "2696f063-32b1-435e-b6d8-346d5e81fe17"
-                              },
-                              "type": "SetVariable",
-                              "inputs": {
-                                "name": "ReturnString",
-                                "value": "@{if(equals(length(outputs('Get_new_owner_SystemUser_id')), 0), concat(body('Maker_Check')?['userdisplayname'], ' cannot be added as they are not a member of the environment security group'), outputs('Update_flow_owner')['body/error/message'])}"
-                              }
-                            },
                             "Get_new_owner_ID_from_envt_system_table": {
                               "actions": {
                                 "Get_environments_CDSMetadataName": {
-                                  "runAfter": {},
                                   "metadata": {
                                     "operationMetadataId": "e3eaba66-6313-438e-8cbe-c92dc35d09bb"
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps",
-                                      "operationId": "GetItem",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "entityName": "admin_environments",
                                       "recordId": "@outputs('Get_flow_from_CoE')?['body/_admin_flowenvironment_value']",
                                       "$select": "admin_environmentcdsmetadataname, admin_environmentcdsinstanceurl"
                                     },
-                                    "authentication": {
-                                      "type": "Raw",
-                                      "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "GetItem",
+                                      "connectionName": "shared_commondataserviceforapps"
                                     },
                                     "retryPolicy": {
                                       "type": "exponential",
@@ -446,58 +412,170 @@
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps_1",
-                                      "operationId": "ListRecordsWithOrganization",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "organization": "@outputs('Get_environments_CDSMetadataName')?['body/admin_environmentcdsinstanceurl']",
                                       "entityName": "systemusers",
                                       "$filter": "azureactivedirectoryobjectid eq '@{triggerBody()['text']}'"
                                     },
-                                    "authentication": {
-                                      "type": "Raw",
-                                      "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "ListRecordsWithOrganization",
+                                      "connectionName": "shared_commondataserviceforapps_1"
                                     }
                                   }
                                 }
                               },
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "f88908e6-feee-433e-9a52-a6b6d0413c92"
                               },
                               "type": "Scope"
                             },
-                            "Update_flow_owner": {
+                            "TryUpdateFlowOwner": {
+                              "actions": {
+                                "Update_flow_owner": {
+                                  "metadata": {
+                                    "operationMetadataId": "ad66b904-a123-42bd-bc91-0ec7a767a527"
+                                  },
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "parameters": {
+                                      "organization": "@outputs('Get_environments_CDSMetadataName')?['body/admin_environmentcdsinstanceurl']",
+                                      "entityName": "workflows",
+                                      "recordId": "@outputs('Get_flow_from_CoE')?['body/admin_workflowentityid']",
+                                      "item": {
+                                        "ownerid@odata.bind": "systemusers(@{outputs('Get_new_owner_SystemUser_id')})"
+                                      }
+                                    },
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "UpdateRecordWithOrganization",
+                                      "connectionName": "shared_commondataserviceforapps_1"
+                                    }
+                                  }
+                                }
+                              },
                               "runAfter": {
                                 "Get_new_owner_ID_from_envt_system_table": [
                                   "Succeeded"
                                 ]
                               },
-                              "metadata": {
-                                "operationMetadataId": "ad66b904-a123-42bd-bc91-0ec7a767a527"
+                              "type": "Scope"
+                            },
+                            "Fail_UpdateFlowOwner": {
+                              "runAfter": {
+                                "Set_ReturnString_to_failed_-_after_OwnerUpdateFailure": [
+                                  "Succeeded"
+                                ]
                               },
-                              "type": "OpenApiConnection",
+                              "type": "Terminate",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_commondataserviceforapps_1",
-                                  "operationId": "UpdateRecordWithOrganization",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                },
-                                "parameters": {
-                                  "organization": "@outputs('Get_environments_CDSMetadataName')?['body/admin_environmentcdsinstanceurl']",
-                                  "entityName": "workflows",
-                                  "recordId": "@outputs('Get_flow_from_CoE')?['body/admin_workflowentityid']",
-                                  "item": {
-                                    "ownerid@odata.bind": "systemusers(@{outputs('Get_new_owner_SystemUser_id')})"
-                                  }
-                                },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "runStatus": "Failed",
+                                "runError": {
+                                  "message": "Flow owner update failed. "
                                 }
                               }
+                            },
+                            "Set_ReturnString_to_failed_-_after_OwnerUpdateFailure": {
+                              "runAfter": {
+                                "TryUpdateFlowOwner": [
+                                  "Failed"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "2696f063-32b1-435e-b6d8-346d5e81fe17"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "ReturnString",
+                                "value": "@{if(equals(length(outputs('Get_new_owner_SystemUser_id')), 0), concat(body('Maker_Check')?['userdisplayname'], ' cannot be added as they are not a member of the environment security group'), outputs('Update_flow_owner')['body/error/message'])}"
+                              }
+                            },
+                            "If_flow_derived_owner_exists": {
+                              "actions": {
+                                "List_Role_for_old_owner": {
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "parameters": {
+                                      "entityName": "admin_powerplatformuserroles",
+                                      "$select": "admin_powerplatformuserroleid",
+                                      "$filter": "_admin_flow_value eq @{triggerBody()?['text_1']} and _admin_powerplatformuser_value eq @{outputs('Get_flow_from_CoE')?['body/_admin_derivedowner_value']}"
+                                    },
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "ListRecords",
+                                      "connectionName": "shared_commondataserviceforapps"
+                                    }
+                                  }
+                                },
+                                "Update_or_Insert_Old_Owner_Role": {
+                                  "actions": {
+                                    "Mark_it_Editor": {
+                                      "foreach": "@outputs('List_Role_for_old_owner')?['body/value']",
+                                      "actions": {
+                                        "Mark_old_owner_as_Editor": {
+                                          "type": "OpenApiConnection",
+                                          "inputs": {
+                                            "parameters": {
+                                              "entityName": "admin_powerplatformuserroles",
+                                              "recordId": "@items('Mark_it_Editor')?['admin_powerplatformuserroleid']",
+                                              "item/admin_groupsize": 1,
+                                              "item/admin_Environment@odata.bind": "admin_environments(@{outputs('Get_flow_from_CoE')?['body/_admin_flowenvironment_value']})",
+                                              "item/admin_rolename": "CanEdit",
+                                              "item/admin_rolenamefriendly": "Co-Owner"
+                                            },
+                                            "host": {
+                                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                              "operationId": "UpdateRecord",
+                                              "connectionName": "shared_commondataserviceforapps"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "type": "Foreach"
+                                    }
+                                  },
+                                  "runAfter": {
+                                    "List_Role_for_old_owner": [
+                                      "Succeeded"
+                                    ]
+                                  },
+                                  "else": {
+                                    "actions": {}
+                                  },
+                                  "expression": {
+                                    "and": [
+                                      {
+                                        "greater": [
+                                          "@length(outputs('List_Role_for_old_owner')?['body/value'])",
+                                          0
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "type": "If"
+                                }
+                              },
+                              "runAfter": {
+                                "Mark_app_owner_in_CoE_Soln_Flow": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "else": {
+                                "actions": {}
+                              },
+                              "expression": {
+                                "and": [
+                                  {
+                                    "not": {
+                                      "equals": [
+                                        "@outputs('Get_flow_from_CoE')?['body/_admin_derivedowner_value']",
+                                        "@null"
+                                      ]
+                                    }
+                                  }
+                                ]
+                              },
+                              "type": "If"
                             }
                           },
                           "runAfter": {
@@ -510,26 +588,21 @@
                               "If_permission_change_passed,_update_owner": {
                                 "actions": {
                                   "Mark_app_owner_in_CoE": {
-                                    "runAfter": {},
                                     "metadata": {
                                       "operationMetadataId": "67435fd2-da70-4cdd-a8bf-43c5f45276d2"
                                     },
                                     "type": "OpenApiConnection",
                                     "inputs": {
-                                      "host": {
-                                        "connectionName": "shared_commondataserviceforapps",
-                                        "operationId": "UpdateRecord",
-                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                      },
                                       "parameters": {
                                         "entityName": "admin_flows",
                                         "recordId": "@triggerBody()['text_1']",
                                         "item/admin_DerivedOwner@odata.bind": "admin_makers(@{triggerBody()['text']})",
                                         "item/cr5d5_flowisorphaned": "no"
                                       },
-                                      "authentication": {
-                                        "type": "Raw",
-                                        "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                        "operationId": "UpdateRecord",
+                                        "connectionName": "shared_commondataserviceforapps"
                                       }
                                     }
                                   }
@@ -538,6 +611,9 @@
                                   "if_not_creator_add_edit_permissions": [
                                     "Succeeded"
                                   ]
+                                },
+                                "else": {
+                                  "actions": {}
                                 },
                                 "expression": {
                                   "equals": [
@@ -553,17 +629,11 @@
                               "if_not_creator_add_edit_permissions": {
                                 "actions": {
                                   "Edit_Flow_Owner_Role_as_Admin": {
-                                    "runAfter": {},
                                     "metadata": {
                                       "operationMetadataId": "3742a173-f750-41c8-a070-02374b48dd2a"
                                     },
                                     "type": "OpenApiConnection",
                                     "inputs": {
-                                      "host": {
-                                        "connectionName": "shared_microsoftflowforadmins",
-                                        "operationId": "Edit-AdminFlowOwnerRole",
-                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                                      },
                                       "parameters": {
                                         "environment": "@triggerBody()['text_2']",
                                         "flow": "@triggerBody()['text_1']",
@@ -577,9 +647,10 @@
                                           }
                                         ]
                                       },
-                                      "authentication": {
-                                        "type": "Raw",
-                                        "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                                        "operationId": "Edit-AdminFlowOwnerRole",
+                                        "connectionName": "shared_microsoftflowforadmins"
                                       },
                                       "retryPolicy": {
                                         "type": "exponential",
@@ -604,11 +675,9 @@
                                     }
                                   }
                                 },
-                                "runAfter": {},
                                 "else": {
                                   "actions": {
                                     "Reason_we_do_not_update_permission_for_Maker": {
-                                      "runAfter": {},
                                       "metadata": {
                                         "operationMetadataId": "deca9133-b39a-44a5-b64d-092a01e0874a"
                                       },
@@ -646,7 +715,6 @@
                         "Ensure_New_Owner_is_in_Maker_and_User_tables": {
                           "actions": {
                             "Maker_Check": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "a58a6830-c1be-4386-82e6-3846d40fffe8"
                               },
@@ -672,36 +740,26 @@
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_commondataserviceforapps",
-                                  "operationId": "ListRecords",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                },
                                 "parameters": {
                                   "entityName": "admin_powerplatformusers",
                                   "$select": "admin_powerplatformuserid",
                                   "$filter": "admin_powerplatformuserid eq @{triggerBody()['text']}"
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                  "operationId": "ListRecords",
+                                  "connectionName": "shared_commondataserviceforapps"
                                 }
                               }
                             },
                             "Add_to_User_Table_if_not_yet_present": {
                               "actions": {
                                 "Add_a_new_user": {
-                                  "runAfter": {},
                                   "metadata": {
                                     "operationMetadataId": "288453ee-de33-4765-8eb7-2421639c09a5"
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps",
-                                      "operationId": "CreateRecord",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "entityName": "admin_powerplatformusers",
                                       "item/admin_displayname": "@outputs('Get_user_profile_(V2)')?['body/displayName']",
@@ -713,36 +771,32 @@
                                       "item/admin_useremail": "@outputs('Get_user_profile_(V2)')?['body/mail']",
                                       "item/admin_userprincipalname": "@outputs('Get_user_profile_(V2)')?['body/userPrincipalName']"
                                     },
-                                    "authentication": {
-                                      "type": "Raw",
-                                      "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "CreateRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
                                     }
                                   }
                                 },
                                 "update_picture_if_not_null": {
                                   "actions": {
                                     "Upload_a_file_or_an_image": {
-                                      "runAfter": {},
                                       "metadata": {
                                         "operationMetadataId": "8a17e548-6f34-4599-8689-5ad9aa059400"
                                       },
                                       "type": "OpenApiConnection",
                                       "inputs": {
-                                        "host": {
-                                          "connectionName": "shared_commondataserviceforapps",
-                                          "operationId": "UpdateEntityFileImageFieldContent",
-                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                        },
                                         "parameters": {
+                                          "x-ms-file-name": "@{body('Maker_Check')?['userid']}_pic",
                                           "entityName": "admin_powerplatformusers",
                                           "recordId": "@body('Maker_Check')?['userid']",
                                           "fileImageFieldName": "admin_photoobject",
-                                          "item": "@body('Get_user_photo_(V2)')",
-                                          "x-ms-file-name": "@{body('Maker_Check')?['userid']}_pic"
+                                          "item": "@body('Get_user_photo_(V2)')"
                                         },
-                                        "authentication": {
-                                          "type": "Raw",
-                                          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                          "operationId": "UpdateEntityFileImageFieldContent",
+                                          "connectionName": "shared_commondataserviceforapps"
                                         }
                                       }
                                     }
@@ -751,6 +805,9 @@
                                     "Add_a_new_user": [
                                       "Succeeded"
                                     ]
+                                  },
+                                  "else": {
+                                    "actions": {}
                                   },
                                   "expression": {
                                     "not": {
@@ -771,6 +828,9 @@
                                   "Succeeded"
                                 ]
                               },
+                              "else": {
+                                "actions": {}
+                              },
                               "expression": {
                                 "equals": [
                                   "@length(outputs('List_new_owner_from_User_Table')?['body/value'])",
@@ -783,7 +843,6 @@
                               "type": "If"
                             }
                           },
-                          "runAfter": {},
                           "metadata": {
                             "operationMetadataId": "359391ad-aa3c-44b4-9071-8dbe27a8072b"
                           },
@@ -805,20 +864,16 @@
                           },
                           "type": "OpenApiConnection",
                           "inputs": {
-                            "host": {
-                              "connectionName": "shared_commondataserviceforapps",
-                              "operationId": "UpdateRecord",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                            },
                             "parameters": {
                               "entityName": "admin_flows",
                               "recordId": "@triggerBody()['text_1']",
                               "item/admin_flowdeleted": true,
                               "item/admin_flowdeletedon": "@utcNow()"
                             },
-                            "authentication": {
-                              "type": "Raw",
-                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                              "operationId": "UpdateRecord",
+                              "connectionName": "shared_commondataserviceforapps"
                             },
                             "retryPolicy": {
                               "type": "exponential",
@@ -843,25 +898,20 @@
                           }
                         },
                         "Remove_Flow_as_Admin": {
-                          "runAfter": {},
                           "metadata": {
                             "operationMetadataId": "83e054d7-f379-4d76-8fef-d8a10231c893"
                           },
                           "type": "OpenApiConnection",
                           "inputs": {
-                            "host": {
-                              "connectionName": "shared_microsoftflowforadmins",
-                              "operationId": "Remove-AdminFlow",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                            },
                             "parameters": {
                               "environment": "@triggerBody()['text_2']",
                               "flow": "@triggerBody()['text_1']",
                               "api-version": "2016-11-01"
                             },
-                            "authentication": {
-                              "type": "Raw",
-                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                              "operationId": "Remove-AdminFlow",
+                              "connectionName": "shared_microsoftflowforadmins"
                             },
                             "retryPolicy": {
                               "type": "exponential",
@@ -878,7 +928,6 @@
                         "Ensure_Editor_is_in_Maker_and_User_tables": {
                           "actions": {
                             "Maker_Check_-_addeditor": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "bb6ac796-dcfa-4aac-82d9-803abb17e08e"
                               },
@@ -904,36 +953,26 @@
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_commondataserviceforapps",
-                                  "operationId": "ListRecords",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                },
                                 "parameters": {
                                   "entityName": "admin_powerplatformusers",
                                   "$select": "admin_powerplatformuserid",
                                   "$filter": "admin_powerplatformuserid eq @{triggerBody()['text']}"
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                  "operationId": "ListRecords",
+                                  "connectionName": "shared_commondataserviceforapps"
                                 }
                               }
                             },
                             "Add_to_User_Table_if_not_yet_present_-_addeditor": {
                               "actions": {
                                 "Add_a_new_user_-_addeditor": {
-                                  "runAfter": {},
                                   "metadata": {
                                     "operationMetadataId": "798105ad-c1ea-4cf2-a82e-03813511601f"
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps",
-                                      "operationId": "CreateRecord",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "entityName": "admin_powerplatformusers",
                                       "item/admin_displayname": "@outputs('Get_user_profile_(V2)')?['body/displayName']",
@@ -945,36 +984,32 @@
                                       "item/admin_useremail": "@outputs('Get_user_profile_(V2)')?['body/mail']",
                                       "item/admin_userprincipalname": "@outputs('Get_user_profile_(V2)')?['body/userPrincipalName']"
                                     },
-                                    "authentication": {
-                                      "type": "Raw",
-                                      "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "CreateRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
                                     }
                                   }
                                 },
                                 "update_picture_if_not_null_-_addeditor": {
                                   "actions": {
                                     "Upload_a_file_or_an_image_-_addeditor": {
-                                      "runAfter": {},
                                       "metadata": {
                                         "operationMetadataId": "a4351d70-b93a-4d65-b989-a688d0fff6f7"
                                       },
                                       "type": "OpenApiConnection",
                                       "inputs": {
-                                        "host": {
-                                          "connectionName": "shared_commondataserviceforapps",
-                                          "operationId": "UpdateEntityFileImageFieldContent",
-                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                        },
                                         "parameters": {
+                                          "x-ms-file-name": "@{triggerBody()['text']}_pic",
                                           "entityName": "admin_powerplatformusers",
                                           "recordId": "@triggerBody()['text']",
                                           "fileImageFieldName": "admin_photoobject",
-                                          "item": "@body('Get_user_photo_(V2)')",
-                                          "x-ms-file-name": "@{triggerBody()['text']}_pic"
+                                          "item": "@body('Get_user_photo_(V2)')"
                                         },
-                                        "authentication": {
-                                          "type": "Raw",
-                                          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                          "operationId": "UpdateEntityFileImageFieldContent",
+                                          "connectionName": "shared_commondataserviceforapps"
                                         }
                                       }
                                     }
@@ -983,6 +1018,9 @@
                                     "Add_a_new_user_-_addeditor": [
                                       "Succeeded"
                                     ]
+                                  },
+                                  "else": {
+                                    "actions": {}
                                   },
                                   "expression": {
                                     "not": {
@@ -1003,6 +1041,9 @@
                                   "Succeeded"
                                 ]
                               },
+                              "else": {
+                                "actions": {}
+                              },
                               "expression": {
                                 "equals": [
                                   "@length(outputs('List_new_editor_from_User_Table')?['body/value'])",
@@ -1015,7 +1056,6 @@
                               "type": "If"
                             }
                           },
-                          "runAfter": {},
                           "metadata": {
                             "operationMetadataId": "66901eaa-29d1-4dae-8cc2-f34a7f7a6443"
                           },
@@ -1024,17 +1064,11 @@
                         "if_not_creator_add_edit_permissions_-_addeditor": {
                           "actions": {
                             "Edit_Flow_Editor_Role_as_Admin": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "33807d9e-3671-455f-b392-6fedb407c1fc"
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_microsoftflowforadmins",
-                                  "operationId": "Edit-AdminFlowOwnerRole",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                                },
                                 "parameters": {
                                   "environment": "@triggerBody()['text_2']",
                                   "flow": "@triggerBody()['text_1']",
@@ -1048,9 +1082,10 @@
                                     }
                                   ]
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                                  "operationId": "Edit-AdminFlowOwnerRole",
+                                  "connectionName": "shared_microsoftflowforadmins"
                                 },
                                 "retryPolicy": {
                                   "type": "exponential",
@@ -1083,7 +1118,6 @@
                           "else": {
                             "actions": {
                               "Reason_we_do_not_update_permission_for_Maker_-_addeditor": {
-                                "runAfter": {},
                                 "metadata": {
                                   "operationMetadataId": "19f0e41a-4a96-4a9e-88ee-f1664eb43189"
                                 },
@@ -1113,42 +1147,31 @@
                         "Ensure_Viewer_is_in_User_table": {
                           "actions": {
                             "List_new_viewer_from_User_Table": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "e9729d0b-f5dc-4027-be7f-96afbfacb45d"
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_commondataserviceforapps",
-                                  "operationId": "ListRecords",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                },
                                 "parameters": {
                                   "entityName": "admin_powerplatformusers",
                                   "$select": "admin_powerplatformuserid",
                                   "$filter": "admin_powerplatformuserid eq @{triggerBody()['text']}"
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                  "operationId": "ListRecords",
+                                  "connectionName": "shared_commondataserviceforapps"
                                 }
                               }
                             },
                             "Add_to_User_Table_if_not_yet_present_-_addviewer": {
                               "actions": {
                                 "Add_a_new_user_-_addviewer": {
-                                  "runAfter": {},
                                   "metadata": {
                                     "operationMetadataId": "872e335a-6ecc-4b18-a252-9a38436a4bcc"
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps",
-                                      "operationId": "CreateRecord",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "entityName": "admin_powerplatformusers",
                                       "item/admin_displayname": "@outputs('Get_user_profile_(V2)')?['body/displayName']",
@@ -1160,36 +1183,32 @@
                                       "item/admin_useremail": "@outputs('Get_user_profile_(V2)')?['body/mail']",
                                       "item/admin_userprincipalname": "@outputs('Get_user_profile_(V2)')?['body/userPrincipalName']"
                                     },
-                                    "authentication": {
-                                      "type": "Raw",
-                                      "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                      "operationId": "CreateRecord",
+                                      "connectionName": "shared_commondataserviceforapps"
                                     }
                                   }
                                 },
                                 "update_picture_if_not_null_-_addviewer": {
                                   "actions": {
                                     "Upload_a_file_or_an_image_-_addviewer": {
-                                      "runAfter": {},
                                       "metadata": {
                                         "operationMetadataId": "570ece0d-c0f5-46dc-9d58-9ff3d3a9903e"
                                       },
                                       "type": "OpenApiConnection",
                                       "inputs": {
-                                        "host": {
-                                          "connectionName": "shared_commondataserviceforapps",
-                                          "operationId": "UpdateEntityFileImageFieldContent",
-                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                        },
                                         "parameters": {
+                                          "x-ms-file-name": "@{triggerBody()['text']}_pic",
                                           "entityName": "admin_powerplatformusers",
                                           "recordId": "@triggerBody()['text']",
                                           "fileImageFieldName": "admin_photoobject",
-                                          "item": "@body('Get_user_photo_(V2)')",
-                                          "x-ms-file-name": "@{triggerBody()['text']}_pic"
+                                          "item": "@body('Get_user_photo_(V2)')"
                                         },
-                                        "authentication": {
-                                          "type": "Raw",
-                                          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                        "host": {
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                          "operationId": "UpdateEntityFileImageFieldContent",
+                                          "connectionName": "shared_commondataserviceforapps"
                                         }
                                       }
                                     }
@@ -1198,6 +1217,9 @@
                                     "Add_a_new_user_-_addviewer": [
                                       "Succeeded"
                                     ]
+                                  },
+                                  "else": {
+                                    "actions": {}
                                   },
                                   "expression": {
                                     "not": {
@@ -1218,6 +1240,9 @@
                                   "Succeeded"
                                 ]
                               },
+                              "else": {
+                                "actions": {}
+                              },
                               "expression": {
                                 "equals": [
                                   "@length(outputs('List_new_viewer_from_User_Table')?['body/value'])",
@@ -1230,7 +1255,6 @@
                               "type": "If"
                             }
                           },
-                          "runAfter": {},
                           "metadata": {
                             "operationMetadataId": "52b462c0-66bf-4a5f-b4f0-ea2e9cae10bf"
                           },
@@ -1239,17 +1263,11 @@
                         "if_not_creator_add_edit_permissions_-_addviewer": {
                           "actions": {
                             "Remove_role_Edit_Flow_Editor_Role_as_Admin": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "b45a1b3a-a116-4c88-aad3-a1534536302b"
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_microsoftflowforadmins",
-                                  "operationId": "Edit-AdminFlowOwnerRole",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                                },
                                 "parameters": {
                                   "environment": "@triggerBody()['text_2']",
                                   "flow": "@triggerBody()['text_1']",
@@ -1261,9 +1279,10 @@
                                     }
                                   ]
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                                  "operationId": "Edit-AdminFlowOwnerRole",
+                                  "connectionName": "shared_microsoftflowforadmins"
                                 }
                               },
                               "description": "This is to ensure we arent downgrading permissions"
@@ -1280,11 +1299,6 @@
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_microsoftflowforadmins",
-                                  "operationId": "Edit-AdminFlowOwnerRole",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                                },
                                 "parameters": {
                                   "environment": "@triggerBody()['text_2']",
                                   "flow": "@triggerBody()['text_1']",
@@ -1298,9 +1312,10 @@
                                     }
                                   ]
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                                  "operationId": "Edit-AdminFlowOwnerRole",
+                                  "connectionName": "shared_microsoftflowforadmins"
                                 }
                               },
                               "description": "This is to ensure we arent downgrading permissions"
@@ -1329,7 +1344,6 @@
                           "else": {
                             "actions": {
                               "Reason_we_do_not_update_permission_for_Maker_-_addviewer": {
-                                "runAfter": {},
                                 "metadata": {
                                   "operationMetadataId": "27aa444c-4bc7-4246-8806-cb319525e5a7"
                                 },
@@ -1359,17 +1373,11 @@
                         "if_not_creator_remove_permissions": {
                           "actions": {
                             "Remove_role": {
-                              "runAfter": {},
                               "metadata": {
                                 "operationMetadataId": "8a6e3274-f15d-41b5-9214-9cbc98d81e8d"
                               },
                               "type": "OpenApiConnection",
                               "inputs": {
-                                "host": {
-                                  "connectionName": "shared_microsoftflowforadmins",
-                                  "operationId": "Edit-AdminFlowOwnerRole",
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins"
-                                },
                                 "parameters": {
                                   "environment": "@triggerBody()['text_2']",
                                   "flow": "@triggerBody()['text_1']",
@@ -1381,9 +1389,10 @@
                                     }
                                   ]
                                 },
-                                "authentication": {
-                                  "type": "Raw",
-                                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_microsoftflowforadmins",
+                                  "operationId": "Edit-AdminFlowOwnerRole",
+                                  "connectionName": "shared_microsoftflowforadmins"
                                 }
                               },
                               "description": "This is to ensure we arent downgrading permissions"
@@ -1404,11 +1413,9 @@
                               }
                             }
                           },
-                          "runAfter": {},
                           "else": {
                             "actions": {
                               "Cannot_remove_Creator_permissions": {
-                                "runAfter": {},
                                 "metadata": {
                                   "operationMetadataId": "d9a8f290-1fb7-4e00-bfe0-1746b7048311"
                                 },
@@ -1452,6 +1459,9 @@
                   "Skipped"
                 ]
               },
+              "else": {
+                "actions": {}
+              },
               "expression": {
                 "equals": [
                   "@variables('ReturnString')",
@@ -1475,10 +1485,6 @@
               "type": "Response",
               "kind": "PowerApp",
               "inputs": {
-                "statusCode": 200,
-                "body": {
-                  "thereturnstring": "@variables('ReturnString')"
-                },
                 "schema": {
                   "type": "object",
                   "properties": {
@@ -1487,7 +1493,12 @@
                       "x-ms-dynamically-added": true,
                       "type": "string"
                     }
-                  }
+                  },
+                  "additionalProperties": {}
+                },
+                "statusCode": 200,
+                "body": {
+                  "thereturnstring": "@variables('ReturnString')"
                 }
               }
             }
@@ -1505,25 +1516,20 @@
         "Error_Handling": {
           "actions": {
             "Create_a_new_record_-_Sync_Flow_Errors": {
-              "runAfter": {},
               "metadata": {
                 "operationMetadataId": "87961ff0-e261-4890-9ab9-a53f88fe0de5"
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "CreateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_syncflowerrorses",
                   "item/admin_name": "@workflow()?['tags']['flowDisplayName']",
                   "item/admin_flowinstanceurl": "@concat(parameters('Power Automate Environment Variable (admin_PowerAutomateEnvironmentVariable)'), workflow()?['tags']['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']['name'])"
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "connectionName": "shared_commondataserviceforapps"
                 },
                 "retryPolicy": {
                   "type": "exponential",
@@ -1561,20 +1567,16 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "ListRecords",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "$select": "admin_coesolutionmetadataid",
                   "$filter": "admin_objectname eq '@{workflow()?['tags']['flowDisplayName']}'",
                   "$top": 1
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
                 }
               }
             },
@@ -1589,20 +1591,16 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "UpdateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "recordId": "@first(outputs('Get_ID_Fail')?['body/value'])?['admin_coesolutionmetadataid']",
                   "item/admin_lastrun": "@utcNow()",
                   "item/admin_lastrunpassed": false
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord",
+                  "connectionName": "shared_commondataserviceforapps"
                 }
               }
             }
@@ -1630,44 +1628,35 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "UpdateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "recordId": "@first(outputs('Get_ID_Pass')?['body/value'])?['admin_coesolutionmetadataid']",
                   "item/admin_lastrun": "@utcNow()",
                   "item/admin_lastrunpassed": true
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord",
+                  "connectionName": "shared_commondataserviceforapps"
                 }
               }
             },
             "Get_ID_Pass": {
-              "runAfter": {},
               "metadata": {
                 "operationMetadataId": "f4f314b6-89d3-4056-af1c-73115e7d6bd1"
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "ListRecords",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "$select": "admin_coesolutionmetadataid",
                   "$filter": "admin_objectname eq '@{workflow()?['tags']['flowDisplayName']}'",
                   "$top": 1
                 },
-                "authentication": {
-                  "type": "Raw",
-                  "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
                 }
               }
             },
@@ -1697,7 +1686,7 @@
       },
       "outputs": {}
     },
-    "templateName": ""
+    "templateName": null
   },
   "schemaVersion": "1.0.0.0"
 }

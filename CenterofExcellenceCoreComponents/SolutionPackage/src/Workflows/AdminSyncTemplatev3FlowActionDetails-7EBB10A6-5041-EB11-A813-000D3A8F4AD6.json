@@ -98,23 +98,23 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "CreateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_syncflowerrorses",
                   "item/admin_name": "@workflow()?['tags']['flowDisplayName']",
                   "item/admin_environmentname": "@triggerOutputs()?['body/admin_displayname']",
                   "item/admin_flowinstanceurl": "@concat(parameters('Power Automate Environment Variable (admin_PowerAutomateEnvironmentVariable)'), workflow()?['tags']['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']['name'])"
                 },
-                "authentication": "@parameters('$authentication')",
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
                 "retryPolicy": {
                   "type": "exponential",
                   "count": 10,
                   "interval": "PT10S"
-                }
+                },
+                "authentication": "@parameters('$authentication')"
               }
             },
             "Terminate": {
@@ -171,16 +171,16 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "UpdateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "recordId": "@first(outputs('Get_ID_Fail')?['body/value'])?['admin_coesolutionmetadataid']",
                   "item/admin_lastrun": "@utcNow()",
                   "item/admin_lastrunpassed": false
+                },
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -209,16 +209,16 @@
               },
               "type": "OpenApiConnection",
               "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "UpdateRecord",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
                 "parameters": {
                   "entityName": "admin_coesolutionmetadatas",
                   "recordId": "@first(outputs('Get_ID_Pass')?['body/value'])?['admin_coesolutionmetadataid']",
                   "item/admin_lastrun": "@utcNow()",
                   "item/admin_lastrunpassed": true
+                },
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -787,15 +787,15 @@
                                       },
                                       "type": "OpenApiConnection",
                                       "inputs": {
-                                        "host": {
-                                          "connectionName": "shared_commondataserviceforapps_2",
-                                          "operationId": "UpdateRecord",
-                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                        },
                                         "parameters": {
                                           "entityName": "admin_flows",
                                           "recordId": "@items('Apply_to_each_flow')?['admin_flowid']",
                                           "item/cr5d5_flowtrigger": "@outputs('flowTrigger')"
+                                        },
+                                        "host": {
+                                          "connectionName": "shared_commondataserviceforapps_2",
+                                          "operationId": "UpdateRecord",
+                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                                         },
                                         "authentication": "@parameters('$authentication')"
                                       }
@@ -989,6 +989,66 @@
                                   "repetitions": 50
                                 }
                               }
+                            },
+                            "Reset_the_FlowWithSpecialityActions": {
+                              "runAfter": {
+                                "Remove_duplicates_in_FlowsWithSpecialtyActions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "b4cf8d04-5efb-4984-b569-9dd8da1602fe"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "FlowsWithSpecialtyActions",
+                                "value": "@variables('FlowsWithSpecialtyActionsTemp')"
+                              }
+                            },
+                            "Remove_duplicates_in_FlowsWithSpecialtyActions": {
+                              "runAfter": {
+                                "Apply_to_each_action": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "ec317cb0-f5a5-4db2-b0fd-a5ecb2112eb5"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "FlowsWithSpecialtyActionsTemp",
+                                "value": "@union(variables('FlowsWithSpecialtyActions'), json('[]'))"
+                              }
+                            },
+                            "Remove_duplicates_in_FlowsWithActions": {
+                              "runAfter": {
+                                "Reset_the_FlowWithSpecialityActions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "5e1f0426-6444-450a-b777-ccfad74437c0"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "FlowsWithActionsTemp",
+                                "value": "@union(variables('ActualFlowActionDetails'), json('[]'))"
+                              }
+                            },
+                            "Reset_the_FlowWithActions": {
+                              "runAfter": {
+                                "Remove_duplicates_in_FlowsWithActions": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "metadata": {
+                                "operationMetadataId": "a93214ef-de81-4e5c-87e1-f3c701e6acb0"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "ActualFlowActionDetails",
+                                "value": "@variables('FlowsWithActionsTemp')"
+                              }
                             }
                           },
                           "runAfter": {
@@ -1100,9 +1160,19 @@
                                         ]
                                       },
                                       "expression": {
-                                        "greater": [
-                                          "@length(outputs('Split_on_uri'))",
-                                          1
+                                        "and": [
+                                          {
+                                            "greater": [
+                                              "@length(outputs('Split_on_uri'))",
+                                              1
+                                            ]
+                                          },
+                                          {
+                                            "less": [
+                                              "@length(variables('HTTP_URLs'))",
+                                              100000
+                                            ]
+                                          }
                                         ]
                                       },
                                       "metadata": {
@@ -1233,9 +1303,19 @@
                                         ]
                                       },
                                       "expression": {
-                                        "greater": [
-                                          "@length(outputs('Split_on_uri_webhook'))",
-                                          1
+                                        "and": [
+                                          {
+                                            "greater": [
+                                              "@length(outputs('Split_on_uri_webhook'))",
+                                              1
+                                            ]
+                                          },
+                                          {
+                                            "less": [
+                                              "@length(variables('HTTPWEBHOOK_URLs'))",
+                                              10000
+                                            ]
+                                          }
                                         ]
                                       },
                                       "metadata": {
@@ -1330,15 +1410,15 @@
                                   },
                                   "type": "OpenApiConnection",
                                   "inputs": {
-                                    "host": {
-                                      "connectionName": "shared_commondataserviceforapps_2",
-                                      "operationId": "UpdateRecord",
-                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                                    },
                                     "parameters": {
                                       "entityName": "admin_flows",
                                       "recordId": "@items('Apply_to_each_flow_with_specialty_connectors')?['FlowID']",
                                       "item/admin_containsplaintextpassword": true
+                                    },
+                                    "host": {
+                                      "connectionName": "shared_commondataserviceforapps_2",
+                                      "operationId": "UpdateRecord",
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                                     },
                                     "authentication": "@parameters('$authentication')"
                                   }
@@ -1603,7 +1683,7 @@
                             }
                           },
                           "runAfter": {
-                            "Reset_needPermissions_to_false": [
+                            "Reset_HTTP_Web_Hook_URLs": [
                               "Succeeded"
                             ]
                           },
@@ -1611,6 +1691,36 @@
                             "operationMetadataId": "40b7f4f6-0d2b-4620-a9cc-7e7ac378f80a"
                           },
                           "type": "Scope"
+                        },
+                        "Reset_HTTP_URLs": {
+                          "runAfter": {
+                            "Reset_needPermissions_to_false": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "f06a6493-e1f6-48f4-b64b-b17ab7ecb87a"
+                          },
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "HTTP_URLs",
+                            "value": []
+                          }
+                        },
+                        "Reset_HTTP_Web_Hook_URLs": {
+                          "runAfter": {
+                            "Reset_HTTP_URLs": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "8d2c876e-d4f3-4c9f-888a-963356398d49"
+                          },
+                          "type": "SetVariable",
+                          "inputs": {
+                            "name": "HTTPWEBHOOK_URLs",
+                            "value": []
+                          }
                         }
                       },
                       "runAfter": {
@@ -1673,15 +1783,15 @@
                           },
                           "type": "OpenApiConnection",
                           "inputs": {
-                            "host": {
-                              "connectionName": "shared_commondataserviceforapps_2",
-                              "operationId": "UpdateRecord",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                            },
                             "parameters": {
                               "entityName": "admin_flows",
                               "recordId": "@items('Clear_each_flow')?['admin_flowid']",
                               "item/admin_containsplaintextpassword": false
+                            },
+                            "host": {
+                              "connectionName": "shared_commondataserviceforapps_2",
+                              "operationId": "UpdateRecord",
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                             },
                             "authentication": "@parameters('$authentication')"
                           }
@@ -1783,15 +1893,15 @@
                           },
                           "type": "OpenApiConnection",
                           "inputs": {
-                            "host": {
-                              "connectionName": "shared_commondataserviceforapps",
-                              "operationId": "UpdateRecord",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                            },
                             "parameters": {
                               "entityName": "admin_flows",
                               "recordId": "@items('Clear_each_flows_flag')?['admin_flowid']",
                               "item/admin_inventorymyflowactiondetails": false
+                            },
+                            "host": {
+                              "connectionName": "shared_commondataserviceforapps",
+                              "operationId": "UpdateRecord",
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                             },
                             "authentication": "@parameters('$authentication')"
                           }
@@ -2114,11 +2224,6 @@
                       },
                       "type": "OpenApiConnection",
                       "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps_2",
-                          "operationId": "CreateRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
                         "parameters": {
                           "entityName": "admin_flowactiondetails",
                           "item/admin_actiontype": "@items('Add_each_new_flow_action_detail')?['ActionType']",
@@ -2131,6 +2236,11 @@
                           "item/admin_flowdetailmodifiedon": "@utcNow()",
                           "item/cr5d5_istypetrigger": "@items('Add_each_new_flow_action_detail')?['isTriggerType']",
                           "item/admin_operation": "@items('Add_each_new_flow_action_detail')?['Operation']"
+                        },
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps_2",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "authentication": "@parameters('$authentication')"
                       }
@@ -2226,7 +2336,7 @@
             }
           },
           "runAfter": {
-            "Initialize_filterString": [
+            "Initialize_Collection_FlowsWithActions_Temporary": [
               "Succeeded"
             ]
           },
@@ -2263,6 +2373,46 @@
             "operationMetadataId": "49b3d120-232d-4694-b373-a97ecde35cc4"
           },
           "type": "If"
+        },
+        "Initialize_Collection_FlowsWithSpecialtyActions_Temporary": {
+          "runAfter": {
+            "Initialize_filterString": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1a5c8df6-c822-4275-9dd1-a4cbce5090c6"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "FlowsWithSpecialtyActionsTemp",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
+        },
+        "Initialize_Collection_FlowsWithActions_Temporary": {
+          "runAfter": {
+            "Initialize_Collection_FlowsWithSpecialtyActions_Temporary": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a0436b60-e62c-4da5-8b78-ec9a4d2bb95d"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "FlowsWithActionsTemp",
+                "type": "array",
+                "value": []
+              }
+            ]
+          }
         }
       },
       "outputs": {}

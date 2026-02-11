@@ -248,97 +248,6 @@
                     },
                     "Get_Owner_Details": {
                       "actions": {
-                        "If_not,_add_them": {
-                          "actions": {
-                            "Maker_Check": {
-                              "runAfter": {},
-                              "metadata": {
-                                "operationMetadataId": "9b77404f-4d8e-4e72-992d-f09db75c4167"
-                              },
-                              "type": "Workflow",
-                              "inputs": {
-                                "host": {
-                                  "workflowReferenceName": "9301f01a-cb40-ec11-8c62-00224829b4c1"
-                                },
-                                "body": {
-                                  "text": "@outputs('OwnerID')",
-                                  "boolean": false
-                                }
-                              }
-                            }
-                          },
-                          "runAfter": {
-                            "See_if_already_in_Maker_Table": [
-                              "Succeeded"
-                            ]
-                          },
-                          "expression": {
-                            "equals": [
-                              "@length(outputs('See_if_already_in_Maker_Table')?['body/value'])",
-                              0
-                            ]
-                          },
-                          "metadata": {
-                            "operationMetadataId": "b0599ae4-1806-47c1-9c32-955838f93048"
-                          },
-                          "type": "If"
-                        },
-                        "Get_Maker": {
-                          "runAfter": {
-                            "If_not,_add_them": [
-                              "Succeeded"
-                            ]
-                          },
-                          "metadata": {
-                            "operationMetadataId": "ae6d172a-7fcb-44c7-88dc-32f5b1cec2c8"
-                          },
-                          "type": "OpenApiConnection",
-                          "inputs": {
-                            "host": {
-                              "connectionName": "shared_commondataserviceforapps",
-                              "operationId": "GetItem",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                            },
-                            "parameters": {
-                              "entityName": "admin_makers",
-                              "recordId": "@outputs('OwnerID')"
-                            },
-                            "authentication": {
-                              "type": "Raw",
-                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
-                            },
-                            "retryPolicy": {
-                              "type": "exponential",
-                              "count": 20,
-                              "interval": "PT20S"
-                            }
-                          }
-                        },
-                        "catch_for_orphans_no_id": {
-                          "runAfter": {
-                            "Get_Maker": [
-                              "Failed"
-                            ]
-                          },
-                          "metadata": {
-                            "operationMetadataId": "b420ec58-4b1d-4f34-8cf4-880c0c0b82ab"
-                          },
-                          "type": "Compose",
-                          "inputs": "catch for orphans no id"
-                        },
-                        "IsOrphan": {
-                          "runAfter": {
-                            "catch_for_orphans_no_id": [
-                              "Succeeded",
-                              "Skipped"
-                            ]
-                          },
-                          "metadata": {
-                            "operationMetadataId": "5ba88760-724b-482e-b7c5-72b125a595a0"
-                          },
-                          "type": "Compose",
-                          "inputs": "@if(or(equals(outputs('OwnerID'), null), equals(length(outputs('OwnerID')), 0), equals(outputs('Get_Maker')?['body/admin_makerisorphaned'], true), equals(outputs('Get_Maker')?['body/admin_makerid'], null)), true, false)"
-                        },
                         "OwnerID": {
                           "runAfter": {},
                           "metadata": {
@@ -347,41 +256,183 @@
                           "type": "Compose",
                           "inputs": "@if(equals(variables('FlowOwnerID'), null), '', variables('FlowOwnerID'))"
                         },
-                        "See_if_already_in_Maker_Table": {
+                        "If_ownerid_is_null": {
+                          "actions": {
+                            "Set_IsOrphan_to_true": {
+                              "runAfter": {},
+                              "metadata": {
+                                "operationMetadataId": "c06825ae-cec4-4b3d-a56e-ed2716973ded"
+                              },
+                              "type": "SetVariable",
+                              "inputs": {
+                                "name": "IsOrphan",
+                                "value": true
+                              }
+                            }
+                          },
                           "runAfter": {
                             "OwnerID": [
                               "Succeeded"
                             ]
                           },
+                          "else": {
+                            "actions": {
+                              "See_if_already_in_Maker_Table": {
+                                "runAfter": {},
+                                "metadata": {
+                                  "operationMetadataId": "6a7ef4f9-5a59-45f9-a290-e89115a2f36d"
+                                },
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "connectionName": "shared_commondataserviceforapps",
+                                    "operationId": "ListRecords",
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                  },
+                                  "parameters": {
+                                    "entityName": "admin_makers",
+                                    "$filter": "admin_makerid eq @{outputs('OwnerID')}"
+                                  },
+                                  "authentication": {
+                                    "type": "Raw",
+                                    "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                  },
+                                  "retryPolicy": {
+                                    "type": "exponential",
+                                    "count": 20,
+                                    "interval": "PT20S"
+                                  }
+                                },
+                                "runtimeConfiguration": {
+                                  "paginationPolicy": {
+                                    "minimumItemCount": 100000
+                                  }
+                                }
+                              },
+                              "If_not,_add_them": {
+                                "actions": {
+                                  "Maker_Check": {
+                                    "runAfter": {},
+                                    "metadata": {
+                                      "operationMetadataId": "9b77404f-4d8e-4e72-992d-f09db75c4167"
+                                    },
+                                    "type": "Workflow",
+                                    "inputs": {
+                                      "host": {
+                                        "workflowReferenceName": "9301f01a-cb40-ec11-8c62-00224829b4c1"
+                                      },
+                                      "body": {
+                                        "text": "@outputs('OwnerID')",
+                                        "boolean": false
+                                      }
+                                    }
+                                  }
+                                },
+                                "runAfter": {
+                                  "See_if_already_in_Maker_Table": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "expression": {
+                                  "equals": [
+                                    "@length(outputs('See_if_already_in_Maker_Table')?['body/value'])",
+                                    0
+                                  ]
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "b0599ae4-1806-47c1-9c32-955838f93048"
+                                },
+                                "type": "If"
+                              },
+                              "Get_Maker": {
+                                "runAfter": {
+                                  "If_not,_add_them": [
+                                    "Succeeded"
+                                  ]
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "ae6d172a-7fcb-44c7-88dc-32f5b1cec2c8"
+                                },
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "connectionName": "shared_commondataserviceforapps",
+                                    "operationId": "GetItem",
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                                  },
+                                  "parameters": {
+                                    "entityName": "admin_makers",
+                                    "recordId": "@outputs('OwnerID')"
+                                  },
+                                  "authentication": {
+                                    "type": "Raw",
+                                    "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                                  },
+                                  "retryPolicy": {
+                                    "type": "exponential",
+                                    "count": 20,
+                                    "interval": "PT20S"
+                                  }
+                                }
+                              },
+                              "catch_for_orphans_no_id": {
+                                "runAfter": {
+                                  "Get_Maker": [
+                                    "Failed"
+                                  ]
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "b420ec58-4b1d-4f34-8cf4-880c0c0b82ab"
+                                },
+                                "type": "Compose",
+                                "inputs": "catch for orphans no id"
+                              },
+                              "Set_IsOrphan": {
+                                "runAfter": {
+                                  "catch_for_orphans_no_id": [
+                                    "Succeeded",
+                                    "Skipped"
+                                  ]
+                                },
+                                "metadata": {
+                                  "operationMetadataId": "c067606f-fc6a-46b1-b38c-3a4b0d30f38c"
+                                },
+                                "type": "SetVariable",
+                                "inputs": {
+                                  "name": "IsOrphan",
+                                  "value": "@if(or(equals(outputs('OwnerID'), null), equals(length(outputs('OwnerID')), 0), equals(outputs('Get_Maker')?['body/admin_makerisorphaned'], true), equals(outputs('Get_Maker')?['body/admin_makerid'], null)), true, false)"
+                                }
+                              }
+                            }
+                          },
+                          "expression": {
+                            "and": [
+                              {
+                                "not": {
+                                  "equals": [
+                                    "@length(outputs('OwnerID'))",
+                                    36
+                                  ]
+                                }
+                              }
+                            ]
+                          },
                           "metadata": {
-                            "operationMetadataId": "6a7ef4f9-5a59-45f9-a290-e89115a2f36d"
+                            "operationMetadataId": "c0d53d0f-fa66-4490-aa74-ce1242b9faff"
                           },
-                          "type": "OpenApiConnection",
-                          "inputs": {
-                            "host": {
-                              "connectionName": "shared_commondataserviceforapps",
-                              "operationId": "ListRecords",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                            },
-                            "parameters": {
-                              "entityName": "admin_makers",
-                              "$filter": "admin_makerid eq @{outputs('OwnerID')}"
-                            },
-                            "authentication": {
-                              "type": "Raw",
-                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
-                            },
-                            "retryPolicy": {
-                              "type": "exponential",
-                              "count": 20,
-                              "interval": "PT20S"
-                            }
+                          "type": "If"
+                        },
+                        "IsOrphan": {
+                          "runAfter": {
+                            "If_ownerid_is_null": [
+                              "Succeeded"
+                            ]
                           },
-                          "runtimeConfiguration": {
-                            "paginationPolicy": {
-                              "minimumItemCount": 100000
-                            }
-                          }
+                          "metadata": {
+                            "operationMetadataId": "5ba88760-724b-482e-b7c5-72b125a595a0"
+                          },
+                          "type": "Compose",
+                          "inputs": "@variables('IsOrphan')"
                         }
                       },
                       "runAfter": {
@@ -533,7 +584,7 @@
                                     "type": "SetVariable",
                                     "inputs": {
                                       "name": "FlowOwnerID",
-                                      "value": "@{''}"
+                                      "value": "''"
                                     }
                                   }
                                 }
@@ -683,6 +734,7 @@
                               "item/admin_flowmodifiedon": "@outputs('Get_Flow_as_Admin')?['body/properties/lastModifiedTime']",
                               "item/admin_flowstate": "@outputs('Get_Flow_as_Admin')?['body/properties/state']",
                               "item/admin_flowidstring": "@triggerBody()['text_2']",
+                              "item/admin_haspremiumconnectors": "@outputs('hasPremium')",
                               "item/admin_inventoryme": false,
                               "item/admin_inventorymyflowactiondetails": true,
                               "item/admin_recordguidasstring": "@triggerBody()['text_2']",
@@ -746,6 +798,7 @@
                                 "item/admin_flowstate": "@outputs('Get_Flow_as_Admin')?['body/properties/state']",
                                 "item/admin_flowsuspensionreason": "@coalesce(outputs('Get_Flow_as_Admin')?['body/properties/flowSuspensionReason'], '')",
                                 "item/admin_flowidstring": "@triggerBody()['text_2']",
+                                "item/admin_haspremiumconnectors": "@outputs('hasPremium')",
                                 "item/admin_inventoryme": false,
                                 "item/admin_inventorymyflowactiondetails": true,
                                 "item/admin_FlowCreator@odata.bind": "admin_makers(@{outputs('CreatorID_Validated')})",
@@ -1052,17 +1105,6 @@
                 },
                 "Prepare_Connection_String": {
                   "actions": {
-                    "Select_type": {
-                      "runAfter": {},
-                      "metadata": {
-                        "operationMetadataId": "fe4a6a63-c900-412e-ab56-ec7a6ac89c4f"
-                      },
-                      "type": "Select",
-                      "inputs": {
-                        "from": "@coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/actions'], '')",
-                        "select": "@item()?['type']"
-                      }
-                    },
                     "add_HTTP_Webhook": {
                       "runAfter": {
                         "add_HTTP": [
@@ -1212,7 +1254,7 @@
                                               "brandColor": {
                                                 "type": "string"
                                               },
-                                              "source": {
+                                              "Source": {
                                                 "type": "string"
                                               },
                                               "version": {
@@ -1252,7 +1294,7 @@
                                             },
                                             "type": "object"
                                           },
-                                          "tier": {
+                                          "Tier": {
                                             "type": "string"
                                           }
                                         },
@@ -1379,6 +1421,68 @@
                       },
                       "type": "Compose",
                       "inputs": "@if(contains(body('Select_triggers'), 'TeamsWebhook'), ',TeamsWebhook', '')"
+                    },
+                    "Tier": {
+                      "actions": {
+                        "Select_tier": {
+                          "runAfter": {},
+                          "metadata": {
+                            "operationMetadataId": "9a84fe0c-facb-4240-aea2-735abb2130ca"
+                          },
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@coalesce(outputs('Get_Flow_as_Admin')?['body/properties/connectionReferences'], '')",
+                            "select": "@item()?['apiDefinition/properties/tier']"
+                          }
+                        },
+                        "hasPremium": {
+                          "runAfter": {
+                            "Filter_to_premium": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "db2d3c8a-d650-419d-8531-e10dce20fd34"
+                          },
+                          "type": "Compose",
+                          "inputs": "@if(or(greater(length(body('Filter_to_premium')), 0), contains(string(coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/actions'], json('[]'))), '\"type\":\"Http\"'), contains(string(coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/triggers'], json('[]'))), '\"kind\":\"HttpWebhook\"'), or(contains(string(coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/triggers'], json('[]'))), '\"type\":\"HttpWebhook\"'), or(contains(string(coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/triggers'], json('[]'))), '\"kind\":\"Http\"'), contains(string(coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/triggers'], json('[]'))), '\"type\":\"Request\"')))), true, false)"
+                        },
+                        "Filter_to_premium": {
+                          "runAfter": {
+                            "Select_tier": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "446ba9bd-c6d5-47c6-ac37-8255971dca38"
+                          },
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Select_tier')",
+                            "where": "@equals(item(), 'Premium')"
+                          }
+                        }
+                      },
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "1d6c11cd-aed2-413c-b62b-f0a5cd613fa7"
+                      },
+                      "type": "Scope"
+                    },
+                    "Select_type": {
+                      "runAfter": {
+                        "Tier": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "fe4a6a63-c900-412e-ab56-ec7a6ac89c4f"
+                      },
+                      "type": "Select",
+                      "inputs": {
+                        "from": "@coalesce(outputs('Get_Flow_as_Admin')?['body/properties/definitionSummary/actions'], '')",
+                        "select": "@item()?['type']"
+                      }
                     }
                   },
                   "runAfter": {
@@ -2617,7 +2721,7 @@
             }
           },
           "runAfter": {
-            "Initialize_ActualConnectionsArray": [
+            "Initialize_Check_IsOrphan": [
               "Succeeded"
             ]
           },
@@ -2894,6 +2998,26 @@
             "operationMetadataId": "5c140442-d939-4ca4-8ec8-d1ee2bed4a81"
           },
           "type": "Scope"
+        },
+        "Initialize_Check_IsOrphan": {
+          "runAfter": {
+            "Initialize_ActualConnectionsArray": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "acc98da7-ccb4-49ab-9fda-281536484a9d"
+          },
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "IsOrphan",
+                "type": "boolean",
+                "value": false
+              }
+            ]
+          }
         }
       }
     },

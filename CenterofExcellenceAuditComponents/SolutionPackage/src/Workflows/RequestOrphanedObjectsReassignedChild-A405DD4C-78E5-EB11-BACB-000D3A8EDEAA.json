@@ -50,7 +50,7 @@
           }
         },
         "Admin eMail (admin_AdminMail)": {
-          "defaultValue": "PowerPlatformAdmins@powercattools.onmicrosoft.com",
+          "defaultValue": "hannescoeadmins@powercattools.onmicrosoft.com",
           "type": "String",
           "metadata": {
             "schemaName": "admin_AdminMail",
@@ -66,7 +66,7 @@
           }
         },
         "Individual Admin (admin_ApprovalAdmin)": {
-          "defaultValue": "AdeleV@powercattools.onmicrosoft.com ",
+          "defaultValue": "rajeevpe@powercattools.onmicrosoft.com",
           "type": "String",
           "metadata": {
             "schemaName": "admin_ApprovalAdmin",
@@ -555,7 +555,7 @@
                   "type": "AppendToStringVariable",
                   "inputs": {
                     "name": "theCard",
-                    "value": "    }\n                    ],\n                    \"width\": \"auto\"\n                }\n            ]\n        },\n        {\n            \"type\": \"ActionSet\",\n    \"actions\": [\n        {\n            \"type\": \"Action.Submit\",\n            \"title\": \"Take Ownership\",\n            \"style\": \"positive\",\n            \"id\": \"TakeOwnership\"\n        },\n        {\n            \"title\": \"Delete All\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"DeleteAll\"\n        },\n     {\n            \"title\": \"Assign Ownership\",\n            \"type\": \"Action.ShowCard\",\n            \"id\": \"AssignAll\",\n            \"card\":{\n                 \"type\": \"AdaptiveCard\",\n                 \"body\": [\n                            {\n                             \"type\": \"Input.Text\",\n                             \"id\": \"toWhom\",\n                             \"placeholder\": \"AssignToWhom@example.com\",\n                             \"style\": \"Email\",\n                             \"spacing\": \"None\"\n                           }\n                         ],\n                  \"actions\":[\n                         {\n                            \"type\": \"Action.Submit\",\n                            \"id\": \"AssignAllDone\",\n                            \"title\": \"Assign Now\"\n                         }\n                       ],\n                   \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n              }\n        },\n        {\n            \"title\": \"Email Me\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"EmailMe\"\n        },\n        {\n            \"title\": \"See Each\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"SeeEach\"\n        }\n"
+                    "value": "    }\n                    ],\n                    \"width\": \"auto\"\n                }\n            ]\n        },\n        {\n            \"type\": \"ActionSet\",\n    \"actions\": [\n        {\n            \"type\": \"Action.Submit\",\n            \"title\": \"Take Ownership\",\n            \"id\": \"TakeOwnership\"\n        },\n        {\n            \"title\": \"Delete All\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"DeleteAll\"\n        },\n     {\n            \"title\": \"Assign Ownership\",\n            \"type\": \"Action.ShowCard\",\n            \"id\": \"AssignAll\",\n            \"card\":{\n                 \"type\": \"AdaptiveCard\",\n                 \"body\": [\n                            {\n                             \"type\": \"Input.Text\",\n                             \"id\": \"toWhom\",\n                             \"placeholder\": \"AssignToWhom@example.com\",\n                             \"style\": \"Email\",\n                             \"spacing\": \"None\"\n                           }\n                         ],\n                  \"actions\":[\n                         {\n                            \"type\": \"Action.Submit\",\n                            \"id\": \"AssignAllDone\",\n                            \"title\": \"Assign Now\"\n                         }\n                       ],\n                   \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\"\n              }\n        },\n        {\n            \"title\": \"Email Me\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"EmailMe\"\n        },\n        {\n            \"title\": \"See Each\",\n            \"type\": \"Action.Submit\",\n            \"id\": \"SeeEach\"\n        }\n"
                   }
                 },
                 "Append_flow_table_start_to_theCard": {
@@ -1474,37 +1474,11 @@
                     "Case_Assign_All": {
                       "case": "AssignAllDone",
                       "actions": {
-                        "Get_toWhom_profile": {
-                          "runAfter": {},
-                          "metadata": {
-                            "operationMetadataId": "40590f56-9334-40fd-9d6d-7496f11b95ec"
-                          },
-                          "type": "OpenApiConnection",
-                          "inputs": {
-                            "host": {
-                              "connectionName": "shared_office365users",
-                              "operationId": "UserProfile_V2",
-                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
-                            },
-                            "parameters": {
-                              "id": "@coalesce(outputs('Send_Table_For_Response')?['body/data/toWhom'], 'No data entered')"
-                            },
-                            "authentication": {
-                              "type": "Raw",
-                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
-                            },
-                            "retryPolicy": {
-                              "type": "exponential",
-                              "count": 10,
-                              "interval": "PT10S"
-                            }
-                          }
-                        },
                         "Switch_on_toWhom_lookup": {
                           "runAfter": {
                             "Get_toWhom_profile": [
-                              "Succeeded",
-                              "Failed"
+                              "Failed",
+                              "Succeeded"
                             ]
                           },
                           "cases": {
@@ -1917,7 +1891,7 @@
                                     },
                                     "parameters": {
                                       "PostNotificationRequest/recipient/to": "@{outputs('SendTo')};",
-                                      "PostNotificationRequest/messageBody": "The user you entered did not resolve: \n@{coalesce(outputs('Send_Table_For_Response')?['body/data/toWhom'], 'No data entered')}\n\nYou will be asked again soon, and please enter a valid email address for the new owner, in this format: @{triggerBody()['text']}",
+                                      "PostNotificationRequest/messageBody": "The user you entered did not resolve: \n@{outputs('validate_toWhom')}\n\n\nYou will be asked again soon, and please enter a valid email address for the new owner, in this format: @{triggerBody()['text']}",
                                       "PostNotificationRequest/messageTitle": "User did not resolve."
                                     },
                                     "authentication": {
@@ -1942,6 +1916,44 @@
                             "operationMetadataId": "972663e6-a876-4393-9297-3ef5546b6a86"
                           },
                           "type": "Switch"
+                        },
+                        "validate_toWhom": {
+                          "runAfter": {},
+                          "metadata": {
+                            "operationMetadataId": "418e7285-25f6-405b-b227-cc6c4a25e22e"
+                          },
+                          "type": "Compose",
+                          "inputs": "@coalesce(if(equals(length(coalesce(outputs('Send_Table_For_Response')?['body/data/toWhom'], '')), 0), 'No data entered', outputs('Send_Table_For_Response')?['body/data/toWhom']), 'No data entered')"
+                        },
+                        "Get_toWhom_profile": {
+                          "runAfter": {
+                            "validate_toWhom": [
+                              "Succeeded"
+                            ]
+                          },
+                          "metadata": {
+                            "operationMetadataId": "40590f56-9334-40fd-9d6d-7496f11b95ec"
+                          },
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "connectionName": "shared_office365users",
+                              "operationId": "UserProfile_V2",
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users"
+                            },
+                            "parameters": {
+                              "id": "@outputs('validate_toWhom')"
+                            },
+                            "authentication": {
+                              "type": "Raw",
+                              "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']"
+                            },
+                            "retryPolicy": {
+                              "type": "exponential",
+                              "count": 10,
+                              "interval": "PT10S"
+                            }
+                          }
                         }
                       }
                     },
@@ -3298,7 +3310,7 @@
                                     "operationMetadataId": "3c46d691-0f2a-4c36-9611-c2c7de1ec33d"
                                   },
                                   "type": "Compose",
-                                  "inputs": "629e7c0d-6186-ed11-81ac-0022480813ff"
+                                  "inputs": "8532d7fe-6086-ed11-81ac-0022480813ff"
                                 },
                                 "List_emails_for_preferred_language_3": {
                                   "runAfter": {

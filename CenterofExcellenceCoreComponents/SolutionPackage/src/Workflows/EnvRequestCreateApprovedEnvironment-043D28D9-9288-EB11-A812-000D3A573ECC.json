@@ -27,15 +27,6 @@
         "api": {
           "name": "shared_powerplatformforadmins"
         }
-      },
-      "shared_commondataserviceforapps_2": {
-        "runtimeSource": "embedded",
-        "connection": {
-          "connectionReferenceLogicalName": "admin_sharedcommondataserviceforapps_98924"
-        },
-        "api": {
-          "name": "shared_commondataserviceforapps"
-        }
       }
     },
     "definition": {
@@ -67,7 +58,7 @@
           }
         },
         "Admin eMail (admin_AdminMail)": {
-          "defaultValue": "PPAdmin@powercattools25q2.onmicrosoft.com",
+          "defaultValue": "hannescoeadmins@powercattools.onmicrosoft.com",
           "type": "String",
           "metadata": {
             "schemaName": "admin_AdminMail",
@@ -75,7 +66,7 @@
           }
         },
         "ProductionEnvironment (admin_ProductionEnvironment)": {
-          "defaultValue": true,
+          "defaultValue": false,
           "type": "Bool",
           "metadata": {
             "schemaName": "admin_ProductionEnvironment",
@@ -184,11 +175,7 @@
                       }
                     },
                     "required": [
-                      "@@odata.type",
-                      "@@odata.id",
                       "@@odata.etag",
-                      "@@odata.editLink",
-                      "admin_makerid@odata.type",
                       "admin_makerid",
                       "admin_userprincipalname"
                     ]
@@ -647,7 +634,7 @@
                     "parameters": {
                       "environment": "@outputs('Get_Environment_as_Admin')?['body/name']",
                       "api-version": "2020-10-01",
-                      "body/properties/linkedEnvironmentMetadata/securityGroupId": "@triggerOutputs()?['body/coe_databasesecuritygroupid']"
+                      "body/properties/linkedEnvironmentMetadata/securityGroupId": "@variables('varSecurityGroupId')"
                     },
                     "authentication": "@parameters('$authentication')",
                     "retryPolicy": {
@@ -1005,7 +992,7 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_commondataserviceforapps_2",
+                      "connectionName": "shared_commondataserviceforapps_1",
                       "operationId": "UpdateOnlyRecordWithOrganization",
                       "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
@@ -1416,7 +1403,7 @@
               {
                 "name": "varSecurityGroupId",
                 "type": "string",
-                "value": "@triggerOutputs()?['body/coe_databasesecuritygroupid']"
+                "value": "@outputs('Get_a_record_-_environment_request')?['body/coe_databasesecuritygroupid']"
               }
             ]
           }
