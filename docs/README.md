@@ -83,10 +83,14 @@ For comprehensive setup instructions, feature documentation, and best practices,
 - [Data Retention and Maintenance Guide](../CenterofExcellenceResources/DataRetentionAndMaintenance.md)
 - [Quick Start: Data Cleanup](../CenterofExcellenceResources/QuickStart-DataCleanup.md)
 
+### Performance and Optimization
+
+- [Flow Action Consumption Optimization Guide](../CenterofExcellenceResources/FlowActionConsumptionOptimization.md) – Reduce Power Automate action consumption in large tenants
+- [Reducing Azure Log Analytics Costs](../Documentation/ReducingAzureLogAnalyticsCosts.md)
+
 ### Administration
 
 - [Admin Role Requirements FAQ](../CenterofExcellenceResources/FAQ-AdminRoleRequirements.md)
-- [Environment Access Control and Visibility FAQ](../CenterofExcellenceResources/FAQ-EnvironmentAccessControl.md)
 
 ## Getting Help
 

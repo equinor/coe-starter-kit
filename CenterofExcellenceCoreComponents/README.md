@@ -60,6 +60,8 @@ If role assignment fails:
 
 - **Quick Setup Checklist:** [QUICK-SETUP-CHECKLIST.md](../CenterofExcellenceResources/QUICK-SETUP-CHECKLIST.md)
 - **Troubleshooting Guide:** [TROUBLESHOOTING-SETUP-WIZARD.md](../CenterofExcellenceResources/TROUBLESHOOTING-SETUP-WIZARD.md)
+- **Copilot Agents FAQ:** [FAQ-COPILOT-AGENTS-SUPPORT.md](./FAQ-COPILOT-AGENTS-SUPPORT.md)
+- **PVA Sync Troubleshooting:** [TROUBLESHOOTING-PVA-SYNC.md](./TROUBLESHOOTING-PVA-SYNC.md)
 - **Official Documentation:** https://learn.microsoft.com/power-platform/guidance/coe/setup-core-components
 - **FAQ:** https://learn.microsoft.com/power-platform/guidance/coe/faq
 
@@ -79,11 +81,28 @@ If role assignment fails:
 For complete installation and configuration instructions, visit the [official documentation](https://learn.microsoft.com/power-platform/guidance/coe/setup-core-components).
 This solution contains the core components for the CoE Starter Kit, including inventory flows, environment management, and telemetry collection.
 
+## ⚠️ Critical: DLP Policy Operations Warning
+
+**IMPORTANT**: When working with DLP (Data Loss Prevention) policies using the CoE Starter Kit tools, be aware of potential risks:
+
+- The **DLP Impact Analysis** tool is designed for **analysis and impact assessment only**
+- For **production DLP policy operations** (create, copy, modify, delete), use the **[Power Platform Admin Center](https://admin.powerplatform.microsoft.com)** directly
+- Copying or rapidly modifying DLP policies through automation can cause **unintended tenant-wide enforcement**
+- DLP policy evaluations are cached for 2-4 hours and may persist even after policy deletion
+
+📖 **See**: [Troubleshooting DLP Policy Scope Issues](../Documentation/TROUBLESHOOTING-DLP-POLICY-SCOPE.md) for detailed guidance and prevention strategies.
+
 ## Troubleshooting Guides
+
+### DLP and Policy Issues
+
+- **[DLP Policy Scope Issues](../Documentation/TROUBLESHOOTING-DLP-POLICY-SCOPE.md)** - Critical guidance for preventing and resolving tenant-wide DLP enforcement issues
 
 ### Inventory and Sync Issues
 
+- **[Power Platform Admin View Not Showing Updated Apps or Missing Environments](../docs/troubleshooting/admin-view-missing-data.md)** - Comprehensive guide for resolving issues where the Admin View app doesn't display all apps or environments after an upgrade
 - **[PVA/Copilot Studio Sync Issues](./TROUBLESHOOTING-PVA-SYNC.md)** - Guide for resolving issues where not all bots appear in the inventory
+- **[Desktop Flows Sync Issues](./TROUBLESHOOTING-DESKTOP-FLOW-SYNC.md)** - Guide for resolving issues where desktop flows are missing from the inventory
 
 ### App Issues
 
@@ -110,6 +129,9 @@ Key environment variables that control inventory behavior:
 - `admin_FullInventory` - Run full inventory (Yes/No, default: No)
 - `admin_InventoryFilter_DaysToLookBack` - Days to look back for modified resources (default: 7)
 - `admin_DelayObjectInventory` - Add random delay to avoid throttling (Yes/No, default: No)
+- `admin_isFullTenantInventory` - Track all environments or a subset (Yes/No, default: Yes)
+
+For detailed guidance on reducing action consumption and optimizing flow performance in large tenants, see the **[Flow Action Consumption Optimization Guide](../CenterofExcellenceResources/FlowActionConsumptionOptimization.md)**.
 
 ## Additional Documentation
 
